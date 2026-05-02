@@ -1,4 +1,4 @@
-# PROJECT: SecureWealth Twin | v3.0-production
+# PROJECT: SecureWealth Twin | v3.2-production
 import os
 import uuid
 import random
@@ -96,31 +96,41 @@ async def get_current_user(
 # ----------------------------
 @router.post("/auth/register")
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    print("Incoming data:", req.email)
+    
     # Check duplicate email
     existing = await db.execute(select(User).where(User.email == req.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Create user
-    user = User(
-        name=req.name,
-        email=req.email,
-        password_hash=hash_password(req.password)
-    )
-    db.add(user)
-    await db.flush()  # get user.id without committing
+    print("Writing to DB (User)...")
+    try:
+        # Create user
+        user = User(
+            name=req.name,
+            email=req.email,
+            password_hash=hash_password(req.password)
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
-    # Create account with ₹1,00,000 starting balance
-    account = Account(
-        user_id=user.id,
-        account_number=generate_account_number(),
-        balance=100000.00
-    )
-    db.add(account)
-    await db.commit()
-    await db.refresh(user)
-    await db.refresh(account)
-    print(f"[DB DEBUG] ✅ User and Account created: {user.email}")
+        print("Writing to DB (Account)...")
+        # Create account with ₹1,00,000 starting balance
+        account = Account(
+            user_id=user.id,
+            account_number=generate_account_number(),
+            balance=100000.00
+        )
+        db.add(account)
+        await db.commit()
+        await db.refresh(account)
+        
+        print(f"[DB DEBUG] ✅ User and Account created: {user.email}")
+    except Exception as e:
+        await db.rollback()
+        print("DB WRITE ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
     token = create_jwt(str(user.id), user.email)
     return {
@@ -136,7 +146,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 # ----------------------------
 # POST /api/auth/login
 # ----------------------------
-@router.post("/api/auth/login")
+@router.post("/auth/login")
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == req.email))
     user = result.scalar_one_or_none()
@@ -159,40 +169,20 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
         "token": token
     }
 
-
 # ----------------------------
-# GET /api/auth/me
+# TEST ROUTE
 # ----------------------------
-@router.get("/api/auth/me")
-async def get_me(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    from sqlalchemy import select, func
-    from datetime import datetime
-    
-    acc_result = await db.execute(select(Account).where(Account.user_id == current_user.id))
-    account = acc_result.scalar_one_or_none()
-    
-    total_sent = 0.0
-    if account:
-        from models import Transaction
-        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0)
-        sent_result = await db.execute(
-            select(func.sum(Transaction.amount)).where(
-                Transaction.sender_id == account.id,
-                Transaction.timestamp >= month_start
-            )
-        )
-        total_sent = float(sent_result.scalar() or 0)
-
-    return {
-        "user_id": str(current_user.id),
-        "name": current_user.name,
-        "email": current_user.email,
-        "financial_profile": current_user.financial_profile or {},
-        "archetype": current_user.archetype or {},
-        "account_number": account.account_number if account else None,
-        "balance": float(account.balance) if account else 0.0,
-        "total_sent": total_sent,
-    }
+@router.get("/test-db-write")
+async def test_db_write(db: AsyncSession = Depends(get_db)):
+    print("Testing DB write...")
+    try:
+        test_email = f"test_{uuid.uuid4().hex[:6]}@test.com"
+        test = User(name="Test Bot", email=test_email, password_hash="123")
+        db.add(test)
+        await db.commit()
+        await db.refresh(test)
+        return {"message": "inserted", "email": test_email}
+    except Exception as e:
+        await db.rollback()
+        print("DB WRITE ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))

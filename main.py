@@ -19,6 +19,8 @@ from routes import (
     aggregator, networth, profile, execution
 )
 from routes.auth import router as auth_router
+from routes.transactions import router as transactions_router
+from routes.goals import router as goals_router
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://securewealth-ai.vercel.app")
 
@@ -88,6 +90,8 @@ app.include_router(networth.router,   prefix="/api/ai", tags=["Net Worth"])
 app.include_router(profile.router,    prefix="/api/ai", tags=["Profile"])
 app.include_router(risk.router,       prefix="/api",    tags=["Risk Engine"])
 app.include_router(execution.router,  prefix="/api",    tags=["Execution Engine"])
+app.include_router(transactions_router, prefix="/api",  tags=["Transactions"])
+app.include_router(goals_router,        prefix="/api",  tags=["Goals"])
 
 # ----------------------------
 # ROOT & DEBUG
