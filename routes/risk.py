@@ -209,8 +209,10 @@ async def risk_check(req: RiskRequest, db: AsyncSession = Depends(get_db)):
         )
         db.add(new_audit)
         await db.commit()
+        print(f"[DB DEBUG] ✅ RiskAuditLog written for score={score}")
     except Exception as e:
-        print(f"Failed to write to DB: {e}")
+        print(f"[DB ERROR] ❌ Failed to write RiskAuditLog to DB: {e}")
+        raise
 
     return {
         "risk_score":    score,

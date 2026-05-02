@@ -98,9 +98,10 @@ async def write_audit_log(db, entry: dict):
         )
         db.add(log)
         await db.commit()
-        print(f"[DB] Audit log written: {entry.get('decision')} score={entry.get('risk_score')}")
+        print(f"[DB DEBUG] ✅ Audit log written: {entry.get('decision')} score={entry.get('risk_score')}")
     except Exception as e:
-        print(f"[DB] Audit log write failed (non-critical): {e}")
+        print(f"[DB ERROR] ❌ Audit log write failed: {e}")
+        raise
 
 
 # -----------------------------

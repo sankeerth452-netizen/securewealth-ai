@@ -120,6 +120,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
     await db.refresh(account)
+    print(f"[DB DEBUG] ✅ User and Account created: {user.email}")
 
     token = create_jwt(str(user.id), user.email)
     return {
