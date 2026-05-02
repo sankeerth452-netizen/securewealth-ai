@@ -167,8 +167,24 @@ async def get_me(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    from sqlalchemy import select, func
+    from datetime import datetime
+    
     acc_result = await db.execute(select(Account).where(Account.user_id == current_user.id))
     account = acc_result.scalar_one_or_none()
+    
+    total_sent = 0.0
+    if account:
+        from models import Transaction
+        month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0)
+        sent_result = await db.execute(
+            select(func.sum(Transaction.amount)).where(
+                Transaction.sender_id == account.id,
+                Transaction.timestamp >= month_start
+            )
+        )
+        total_sent = float(sent_result.scalar() or 0)
+
     return {
         "user_id": str(current_user.id),
         "name": current_user.name,
@@ -176,5 +192,6 @@ async def get_me(
         "financial_profile": current_user.financial_profile or {},
         "archetype": current_user.archetype or {},
         "account_number": account.account_number if account else None,
-        "balance": float(account.balance) if account else 0.0
+        "balance": float(account.balance) if account else 0.0,
+        "total_sent": total_sent,
     }

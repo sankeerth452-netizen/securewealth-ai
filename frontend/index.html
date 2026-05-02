@@ -2755,6 +2755,26 @@ function saveUser() {
 
 const API = "https://securewealth-backend.onrender.com";
 
+// Safe fetch — never silently fails
+async function safeFetch(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${API}${endpoint}`;
+    try {
+        const res = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options,
+        });
+        if (res.status === 401) { window.location.href = '/login'; return null; }
+        if (res.status === 0 || !res.ok) {
+            console.error(`API error ${res.status} at ${url}`);
+            return { error: true, message: `Server returned ${res.status}` };
+        }
+        return await res.json();
+    } catch (err) {
+        console.error(`Network error at ${url}:`, err.message);
+        return { error: true, message: 'Cannot reach server — check connection' };
+    }
+}
+
 // ── WIZARD STATE ──
 let wizardStep = 1;
 let selectedRisk = USER.risk_appetite || 'medium';
@@ -3334,9 +3354,8 @@ async function loadRiskAlerts() {
   document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);font-size:13px;'>Loading audit log...</div>";
   
   try {
-    const res = await fetch(`${API}/api/execute/audit`);
-    if (!res.ok) throw new Error("API error");
-    const data = await res.json();
+    const data = await safeFetch(`/api/execute/audit`);
+    if (data && data.error) throw new Error(data.message);
     
     const logs = data.log || [];
     
@@ -3545,11 +3564,9 @@ async function simulateFraud() {
   showTyping();
   
   try {
-    const res = await fetch(`${API}/api/simulate/fraud`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+    const data = await safeFetch(`/api/simulate/fraud`, {
+      method: \'POST\'
     });
-    const data = await res.json();
     
     // Simulate a slight delay for dramatic effect
     setTimeout(() => {
@@ -4035,9 +4052,9 @@ async function loadActivityFeed() {
   if (!feed) return;
   let items = [...STATIC_FEED];
   try {
-    const res = await fetch(`${API}/api/execute/audit`);
-    if (res.ok) {
-      const data = await res.json();
+    const data = await safeFetch(`/api/execute/audit`);
+    if (data && !data.error) {
+
       const logs = (data.log || []).slice(-3).reverse();
       logs.forEach(l => {
         const dot = l.decision === 'BLOCK' ? 'block' : l.decision === 'WARN' ? 'warn' : 'allow';

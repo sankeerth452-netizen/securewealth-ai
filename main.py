@@ -1,4 +1,4 @@
-# PROJECT: SecureWealth Twin | v3.0-production
+# PROJECT: SecureWealth Twin | v3.2
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 
-from database import create_all_tables, get_db
+from database import create_all_tables, get_db, check_db_connection
 from models import Account, Transaction, RiskAuditLog
 import models  # ensures all models are registered with Base
 
@@ -18,20 +18,17 @@ from routes import (
 )
 from routes.auth import router as auth_router
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")
 
 # ----------------------------
 # LIFESPAN (replaces @on_event)
 # ----------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        await create_all_tables()
-        print("✅ Database tables created/verified")
-    except Exception as e:
-        print(f"⚠️  DB init skipped (no DB configured): {e}")
-    print("\n🚀 SecureWealth Twin Backend Started")
-    print("👉 API Docs: http://localhost:8000/docs")
-    print("👉 Health:   http://localhost:8000/health\n")
+    print("🚀 SecureWealth Twin API starting...")
+    await create_all_tables()
+    db_ok = await check_db_connection()
+    print(f"[DB] Status: {'✅ connected' if db_ok else '❌ offline — degraded mode'}")
     yield
 
 
@@ -39,9 +36,8 @@ async def lifespan(app: FastAPI):
 # APP INIT
 # ----------------------------
 app = FastAPI(
-    title="SecureWealth Twin — AI Service",
-    description="AI-powered Wealth Intelligence + Fraud Protection System",
-    version="3.0.0",
+    title="SecureWealth Twin",
+    version="3.2",
     lifespan=lifespan
 )
 
@@ -49,19 +45,13 @@ app = FastAPI(
 # ----------------------------
 # CORS
 # ----------------------------
-FRONTEND_URL = os.getenv("FRONTEND_URL", "")
-origins = [
-    "http://localhost:5000",
-    "http://localhost:3000",
-    "http://127.0.0.1:5000",
-    "null",           # for file:// local HTML
-]
-if FRONTEND_URL:
-    origins.append(FRONTEND_URL)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # Restrict in production using 'origins' list
+    allow_origins=[
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        FRONTEND_URL,
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,
@@ -88,7 +78,7 @@ app.include_router(execution.router,  prefix="/api",    tags=["Execution Engine"
 def root():
     return {
         "status": "SecureWealth Twin AI is running ✅",
-        "version": "3.0.0",
+        "version": "3.2",
         "agents": 7,
         "db": "PostgreSQL via Supabase",
         "auth": "JWT (HS256)",
@@ -99,19 +89,23 @@ def root():
 # HEALTH CHECK (with DB)
 # ----------------------------
 @app.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
-    db_status = "disconnected"
-    try:
-        await db.execute(text("SELECT 1"))
-        db_status = "connected"
-    except Exception as e:
-        db_status = f"error: {str(e)[:60]}"
-
+async def health():
+    db_ok = await check_db_connection()
+    tables_ok = False
+    if db_ok:
+        from database import AsyncSessionLocal
+        from sqlalchemy import text
+        async with AsyncSessionLocal() as s:
+            r = await s.execute(text(
+                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='users')"
+            ))
+            tables_ok = r.scalar()
     return {
         "status": "healthy",
-        "db": db_status,
+        "db": "connected" if db_ok else "offline",
+        "tables_created": tables_ok,
         "agents": 7,
-        "version": "3.0.0"
+        "version": "3.2"
     }
 
 
@@ -124,6 +118,8 @@ async def user_summary(user_id: str, db: AsyncSession = Depends(get_db)):
     Returns live dashboard data for a user from the database.
     Powers the real-time dashboard after login.
     """
+    if not db:
+        return {"error": "DB offline"}
     try:
         from uuid import UUID
         uid = UUID(user_id)

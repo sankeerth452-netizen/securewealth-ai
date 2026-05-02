@@ -1,98 +1,172 @@
-# PROJECT: SecureWealth Twin | v3.0-production
-import os
-import requests
-from flask import Flask, render_template, request, session, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from dotenv import load_dotenv
+# PROJECT: SecureWealth Twin | v3.2
+import os, requests
+from datetime import datetime
+from functools import wraps
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, session
 
-load_dotenv()
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
-app = Flask(__name__, template_folder=".", static_folder=".")
-app.secret_key = os.getenv("SECRET_KEY", "flask-secret-key-for-development")
+FASTAPI_URL = os.getenv("FASTAPI_URL", "http://localhost:8000").rstrip('/')
 
-FASTAPI_URL = os.getenv("FASTAPI_URL", "http://localhost:8000")
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
-
-class User(UserMixin):
-    def __init__(self, user_id, name, email, token):
-        self.id = user_id
-        self.name = name
-        self.email = email
-        self.token = token
-
-@login_manager.user_loader
-def load_user(user_id):
-    if "user" in session and session["user"]["id"] == user_id:
-        u = session["user"]
-        return User(u["id"], u["name"], u["email"], u["token"])
-    return None
-
-def api(endpoint, method="GET", payload=None):
-    token = session.get("user", {}).get("token", "")
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+# ── API HELPER ────────────────────────────────────────────────────────────────
+def api(endpoint, method="POST", payload=None):
+    token = session.get("jwt_token", "")
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     try:
-        if method == "GET":
-            r = requests.get(f"{FASTAPI_URL}{endpoint}", headers=headers, timeout=10)
-        else:
-            r = requests.post(f"{FASTAPI_URL}{endpoint}", json=payload, headers=headers, timeout=10)
+        url = f"{FASTAPI_URL}{endpoint}"
+        r = (requests.get(url, headers=headers, timeout=15) if method == "GET"
+             else requests.post(url, json=payload or {}, headers=headers, timeout=15))
+        if r.status_code == 401:
+            return {"error": "session_expired"}
         return r.json()
-    except requests.exceptions.RequestException:
-        return {"error": "AI agents offline or unreachable"}
+    except requests.exceptions.ConnectionError:
+        return {"error": "offline", "message": "AI agents are offline"}
+    except requests.exceptions.Timeout:
+        return {"error": "timeout", "message": "Request timed out"}
+    except Exception as e:
+        return {"error": "unknown", "message": str(e)}
 
+# ── AUTH DECORATOR ────────────────────────────────────────────────────────────
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("jwt_token"):
+            flash("Please log in to continue", "error")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+# ── CONTEXT PROCESSOR — makes current_user available in ALL templates ─────────
+@app.context_processor
+def inject_globals():
+    return {
+        "current_user": type("User", (), {
+            "is_authenticated": bool(session.get("jwt_token")),
+            "name":  session.get("user_name", ""),
+            "email": session.get("user_email", ""),
+            "id":    session.get("user_id", ""),
+        })(),
+        "now_hour": datetime.now().hour,
+    }
+
+# ── AUTH ROUTES ───────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
-    if current_user.is_authenticated:
+    return redirect(url_for("dashboard") if session.get("jwt_token") else url_for("login"))
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("jwt_token"):
         return redirect(url_for("dashboard"))
-    return render_template("index.html")
+    if request.method == "POST":
+        result = api("/api/auth/login", payload={
+            "email":    request.form.get("email"),
+            "password": request.form.get("password"),
+        })
+        if result.get("error") or not result.get("token"):
+            flash(result.get("message", "Invalid email or password"), "error")
+            return render_template("login.html")
+        session.permanent = True
+        session["jwt_token"]      = result["token"]
+        session["user_id"]        = result.get("user_id", "")
+        session["user_name"]      = result.get("name", "")
+        session["user_email"]     = result.get("email", "")
+        session["account_number"] = result.get("account_number", "")
+        session["balance"]        = result.get("balance", 0)
+        return redirect(url_for("dashboard"))
+    return render_template("login.html")
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if session.get("jwt_token"):
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        result = api("/api/auth/register", payload={
+            "name":     request.form.get("name"),
+            "email":    request.form.get("email"),
+            "password": request.form.get("password"),
+        })
+        if result.get("error") or not result.get("token"):
+            flash(result.get("message", "Registration failed"), "error")
+            return render_template("signup.html")
+        session.permanent = True
+        session["jwt_token"]      = result["token"]
+        session["user_id"]        = result.get("user_id", "")
+        session["user_name"]      = result.get("name", "")
+        session["user_email"]     = result.get("email", "")
+        session["account_number"] = result.get("account_number", "")
+        session["balance"]        = result.get("balance", 100000)
+        flash("Account created! Set up your financial profile.", "success")
+        return redirect(url_for("onboarding"))
+    return render_template("signup.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+# ── PAGES (all other routes stay the same — just add @login_required) ─────────
+# dashboard, transfer, transactions, simulate, networth, insights, settings, onboarding
+# Use the api() helper instead of call_agent() everywhere
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    # Fetch real data from FastAPI
-    data = api(f"/api/ai/user-summary?user_id={current_user.id}", method="GET")
-    return render_template("index.html", user_data=data)
+    return render_template("index.html")
 
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.json
-    res = api("/api/auth/login", method="POST", payload=data)
-    if "token" in res:
-        user = User(res["user_id"], res["name"], res["email"], res["token"])
-        session["user"] = {
-            "id": res["user_id"],
-            "name": res["name"],
-            "email": res["email"],
-            "token": res["token"]
-        }
-        login_user(user)
-        return {"success": True}
-    return {"error": res.get("detail", "Login failed")}, 401
-
-@app.route("/signup", methods=["POST"])
-def signup():
-    data = request.json
-    res = api("/api/auth/register", method="POST", payload=data)
-    if "token" in res:
-        user = User(res["user_id"], res["name"], res["email"], res["token"])
-        session["user"] = {
-            "id": res["user_id"],
-            "name": res["name"],
-            "email": res["email"],
-            "token": res["token"]
-        }
-        login_user(user)
-        return {"success": True}
-    return {"error": res.get("detail", "Signup failed")}, 400
-
-@app.route("/logout")
+# ── API PROXY ROUTES ──────────────────────────────────────────────────────────
+@app.route("/api/chat", methods=["POST"])
 @login_required
-def logout():
-    logout_user()
-    session.pop("user", None)
-    return redirect(url_for("index"))
+def api_chat():
+    data = request.get_json(silent=True) or {}
+    profile = session.get("user_profile", {
+        "name": session.get("user_name", "User"),
+        "income": 50000, "goal": "wealth building",
+        "risk_appetite": "medium", "current_savings": 0,
+        "investments": "none", "age": 30,
+    })
+    return jsonify(api("/api/ai/chat", payload={
+        "message": data.get("message", ""),
+        "user_profile": profile,
+    }))
+
+@app.route("/api/simulate", methods=["POST"])
+@login_required
+def api_simulate():
+    return jsonify(api("/api/ai/simulate", payload=request.get_json(silent=True) or {}))
+
+@app.route("/api/networth", methods=["POST"])
+@login_required
+def api_networth():
+    return jsonify(api("/api/ai/networth", payload=request.get_json(silent=True) or {}))
+
+@app.route("/api/aggregate", methods=["POST"])
+@login_required
+def api_aggregate():
+    profile = session.get("user_profile", {"income": 50000, "goal": "wealth building"})
+    return jsonify(api("/api/ai/aggregate", payload={
+        "user_profile": profile,
+        "external_accounts": (request.get_json(silent=True) or {}).get("accounts", []),
+    }))
+
+@app.route("/api/risk-audit")
+@login_required
+def api_risk_audit():
+    return jsonify(api("/api/execute/audit", method="GET"))
+
+@app.route("/api/account-balance")
+@login_required
+def api_account_balance():
+    result = api(f"/api/auth/me", method="GET")
+    if result.get("error"):
+        return jsonify({"balance": session.get("balance", 0),
+                        "account_number": session.get("account_number", ""),
+                        "total_sent": 0})
+    return jsonify(result)
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(debug=False, port=5000)

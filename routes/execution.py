@@ -78,33 +78,29 @@ def generate_ai_nudge(req: ExecuteRequest, risk_level: str) -> str:
     return "✅ This action aligns with your normal financial behavior."
 
 
-async def _write_audit_to_db(
-    db: AsyncSession,
-    req: ExecuteRequest,
-    score: int,
-    level: str,
-    decision: str,
-    reason: str,
-    signals: list,
-    pyramid: dict
-):
-    """Write execution result to risk_audit_log. Swallows DB errors gracefully."""
+async def write_audit_log(db, entry: dict):
+    """Write to DB audit log. Silently falls back if DB unavailable."""
+    if db is None:
+        return
     try:
-        new_audit = RiskAuditLog(
-            action_type=req.action_type,
-            amount=req.amount,
-            risk_score=score,
-            level=level,
-            decision=decision,
-            reason=reason,
-            signals=signals,
-            trust_pyramid=pyramid,
-            timestamp=datetime.datetime.utcnow()
+        from models import RiskAuditLog
+        from decimal import Decimal
+        import json
+        log = RiskAuditLog(
+            action_type=entry.get("action_type", "unknown"),
+            amount=Decimal(str(entry.get("amount", 0))),
+            risk_score=entry.get("risk_score", 0),
+            level=entry.get("level", ""),
+            decision=entry.get("decision", ""),
+            reason=entry.get("reason", ""),
+            signals=entry.get("signals", []),
+            trust_pyramid=entry.get("trust_pyramid", {}),
         )
-        db.add(new_audit)
+        db.add(log)
         await db.commit()
+        print(f"[DB] Audit log written: {entry.get('decision')} score={entry.get('risk_score')}")
     except Exception as e:
-        print(f"[DB] Failed to write execution audit: {e}")
+        print(f"[DB] Audit log write failed (non-critical): {e}")
 
 
 # -----------------------------
@@ -148,7 +144,7 @@ async def execute_action(req: ExecuteRequest, db: AsyncSession = Depends(get_db)
     print("Decision:", decision)
     print("Score:", score)
 
-    audit_log.append({
+    audit_entry = {
         "timestamp":   datetime.datetime.now().isoformat(),
         "action_type": req.action_type,
         "amount":      req.amount,
@@ -156,11 +152,13 @@ async def execute_action(req: ExecuteRequest, db: AsyncSession = Depends(get_db)
         "risk_score":  score,
         "level":       level,
         "decision":    decision,
-        "reason":      reason
-    })
+        "reason":      reason,
+        "trust_pyramid": pyramid
+    }
+    audit_log.append(audit_entry)
 
     # ── STEP 3b: DB AUDIT WRITE ─────────────────
-    await _write_audit_to_db(db, req, score, level, decision, reason, signals, pyramid)
+    await write_audit_log(db, audit_entry)
 
     # ── STEP 4: BASE RESPONSE ───────────────────
     response = {
