@@ -51,3 +51,22 @@ def create_goal(
             db.rollback()
         print("DB WRITE ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/goals")
+def get_goals(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from models import Goal
+    goals = db.query(Goal).filter(Goal.user_id == current_user.id).all()
+    return {
+        "goals": [
+            {
+                "id":             g.id,
+                "name":           g.name,
+                "target_amount":  float(g.target_amount),
+                "current_amount": float(g.current_amount),
+            }
+            for g in goals
+        ]
+    }

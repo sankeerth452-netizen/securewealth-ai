@@ -220,3 +220,34 @@ def do_transfer(req: TransferRequest, db: Session = Depends(get_db)):
         "sender_balance":  float(sender_acc.balance),
         "message":         f"₹{amount:,.2f} transferred successfully",
     }
+
+
+# ── RE-EXPORTS & DEPENDENCIES ──────────────────────────────────────────────────
+
+from models import User  # noqa — re-export for other routes
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    FastAPI dependency. Decodes JWT and returns the User from DB.
+    Raises 401 if token is missing, expired, or invalid.
+    """
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload  = decode_token(token)
+        user_id  = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token expired or invalid")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user

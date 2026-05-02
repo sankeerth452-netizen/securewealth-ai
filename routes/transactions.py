@@ -9,6 +9,7 @@ import traceback
 
 from database import get_db
 from models import Transaction
+from routes.auth import get_current_user, User
 
 router = APIRouter()
 
@@ -54,3 +55,31 @@ def create_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
         if db:
             db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/transactions")
+def get_transactions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from models import Account, Transaction
+    account = db.query(Account).filter(Account.user_id == current_user.id).first()
+    if not account:
+        return {"transactions": []}
+    txns = db.query(Transaction).filter(
+        (Transaction.sender_id == account.id) | (Transaction.receiver_id == account.id)
+    ).order_by(Transaction.timestamp.desc()).limit(50).all()
+    return {
+        "transactions": [
+            {
+                "id":        t.id,
+                "amount":    float(t.amount),
+                "note": t.note,
+                "status": t.status,
+                "type": "sent" if t.sender_id == account.id else "received",
+                "timestamp": t.timestamp.isoformat(),
+                "risk_score": t.risk_score,
+                "risk_decision": t.risk_decision,
+            }
+            for t in txns
+        ]
+    }
