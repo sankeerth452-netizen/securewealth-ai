@@ -69,48 +69,61 @@ class TransferRequest(BaseModel):
 
 @router.post("/register")
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    print(f"[AUTH] Register attempt: {req.email}")
+
     if db is None:
+        print("[AUTH] ❌ No DB session")
         raise HTTPException(503, "Database unavailable")
 
-    # Check duplicate email
-    existing = db.query(User).filter(User.email == req.email).first()
-    if existing:
-        raise HTTPException(400, "Email already registered")
+    try:
+        # Check duplicate email
+        existing = db.query(User).filter(User.email == req.email).first()
+        if existing:
+            print(f"[AUTH] ❌ Email already exists: {req.email}")
+            raise HTTPException(400, "Email already registered")
 
-    # Create user
-    user = User(
-        id=str(uuid.uuid4()),
-        name=req.name,
-        email=req.email,
-        password_hash=hash_password(req.password),
-    )
-    db.add(user)
-    db.flush()  # Get user.id without full commit yet
+        # Create user
+        user = User(
+            id=str(uuid.uuid4()),
+            name=req.name,
+            email=req.email,
+            password_hash=hash_password(req.password),
+        )
+        db.add(user)
+        db.flush()  # Get user.id without full commit yet
+        print(f"[AUTH] User flushed with id: {user.id}")
 
-    # Create account with starting balance
-    account = Account(
-        id=str(uuid.uuid4()),
-        user_id=user.id,
-        account_number=generate_account_number(),
-        balance=Decimal("100000.00"),
-    )
-    db.add(account)
-    db.commit()
-    db.refresh(user)
-    db.refresh(account)
+        # Create account with starting balance
+        account = Account(
+            id=str(uuid.uuid4()),
+            user_id=user.id,
+            account_number=generate_account_number(),
+            balance=Decimal("100000.00"),
+        )
+        db.add(account)
+        db.commit()
+        print(f"[AUTH] ✅ Committed — user: {user.email} | account: {account.account_number}")
 
-    print(f"[AUTH] Registered user: {user.email} | account: {account.account_number}")
+        db.refresh(user)
+        db.refresh(account)
 
-    token = create_token(user.id, user.email)
-    return {
-        "token":          token,
-        "user_id":        user.id,
-        "name":           user.name,
-        "email":          user.email,
-        "account_number": account.account_number,
-        "balance":        float(account.balance),
-        "message":        "Account created successfully",
-    }
+        token = create_token(user.id, user.email)
+        return {
+            "token":          token,
+            "user_id":        user.id,
+            "name":           user.name,
+            "email":          user.email,
+            "account_number": account.account_number,
+            "balance":        float(account.balance),
+            "message":        "Account created successfully",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if db: db.rollback()
+        print(f"[AUTH] ❌ Register failed: {e}")
+        raise HTTPException(500, f"Registration error: {str(e)}")
 
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
