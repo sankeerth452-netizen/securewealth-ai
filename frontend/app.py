@@ -1,4 +1,4 @@
-# PROJECT: SecureWealth Twin | v3.2
+# PROJECT: SecureWealth Twin | v3.4
 import os, requests
 from datetime import datetime
 from functools import wraps
@@ -20,6 +20,10 @@ def api(endpoint, method="POST", payload=None):
         url = f"{FASTAPI_URL}{endpoint}"
         r = (requests.get(url, headers=headers, timeout=15) if method == "GET"
              else requests.post(url, json=payload or {}, headers=headers, timeout=15))
+        
+        # Log for debugging
+        print(f"[API] {method} {url} -> {r.status_code}")
+        
         if r.status_code == 401:
             return {"error": "session_expired"}
         return r.json()
@@ -101,7 +105,7 @@ def signup():
         session["account_number"] = result.get("account_number", "")
         session["balance"]        = result.get("balance", 100000)
         flash("Account created! Set up your financial profile.", "success")
-        return redirect(url_for("onboarding"))
+        return redirect(url_for("dashboard")) # Modified from onboarding to dashboard for simplicity
     return render_template("signup.html")
 
 @app.route("/logout")
@@ -109,16 +113,116 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# ── PAGES (all other routes stay the same — just add @login_required) ─────────
-# dashboard, transfer, transactions, simulate, networth, insights, settings, onboarding
-# Use the api() helper instead of call_agent() everywhere
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("index.html")
 
+# ── TRANSFER ROUTES ───────────────────────────────────────────────────────────
+
+@app.route('/transfer', methods=['GET', 'POST'])
+@login_required
+def transfer():
+    account_number = session.get('account_number', '')
+    balance        = session.get('balance', 0)
+
+    if request.method == 'POST':
+        recipient = request.form.get('recipient', '').strip()
+        amount    = float(request.form.get('amount', 0))
+        note      = request.form.get('note', '')
+
+        # Step 1: AI risk check
+        exec_payload = {
+            "action_type":             "transfer",
+            "amount":                  amount,
+            "avg_amount":              float(balance) * 0.05,
+            "is_new_device":           False,
+            "seconds_since_login":     60,
+            "is_first_investment_type": False,
+            "otp_retry_count":         0,
+            "hour_of_day":             datetime.now().hour,
+            "first_time_count":        0,
+            "monthly_amount":          amount,
+            "years":                   5,
+        }
+        risk = api('/api/execute', payload=exec_payload)
+        decision = risk.get('risk', {}).get('decision', 'ALLOW')
+
+        if decision == 'BLOCK':
+            reason = risk.get('risk', {}).get('reason', 'Risk detected.')
+            flash(f'🛡️ Transfer blocked by AI Fraud Shield: {reason}', 'error')
+            return render_template('transfer.html',
+                                   balance=balance,
+                                   account_number=account_number,
+                                   risk_result=risk)
+
+        if decision == 'WARN':
+            session['pending_transfer'] = {
+                'recipient': recipient,
+                'amount':    amount,
+                'note':      note,
+                'risk':      risk,
+            }
+            return render_template('transfer.html',
+                                   balance=balance,
+                                   account_number=account_number,
+                                   risk_result=risk,
+                                   needs_confirm=True,
+                                   amount=amount,
+                                   recipient=recipient)
+
+        # Step 2: Execute transfer in DB via FastAPI
+        result = api('/api/auth/transfer', payload={
+            "sender_account_number":    account_number,
+            "recipient_account_number": recipient,
+            "amount":                   amount,
+            "note":                     note,
+            "token":                    session.get('jwt_token', ''),
+        })
+
+        if result.get('error') or result.get('status') != 'success':
+            msg = result.get('message', 'Transfer failed')
+            flash(f'❌ {msg}', 'error')
+            return render_template('transfer.html',
+                                   balance=balance,
+                                   account_number=account_number)
+
+        # Update session balance
+        session['balance'] = result.get('sender_balance', balance - amount)
+        flash(f'✅ ₹{amount:,.2f} transferred successfully!', 'success')
+        return redirect(url_for('dashboard'))
+
+    return render_template('transfer.html',
+                           balance=balance,
+                           account_number=account_number)
+
+
+@app.route('/transfer/confirm', methods=['POST'])
+@login_required
+def confirm_transfer():
+    pending = session.pop('pending_transfer', None)
+    if not pending:
+        flash('No pending transfer', 'error')
+        return redirect(url_for('transfer'))
+
+    result = api('/api/auth/transfer', payload={
+        "sender_account_number":    session.get('account_number', ''),
+        "recipient_account_number": pending['recipient'],
+        "amount":                   pending['amount'],
+        "note":                     pending.get('note', ''),
+        "token":                    session.get('jwt_token', ''),
+    })
+
+    if result.get('status') == 'success':
+        session['balance'] = result.get('sender_balance', 0)
+        flash(f'✅ ₹{pending["amount"]:,.2f} confirmed and sent!', 'success')
+    else:
+        flash(f'❌ {result.get("message", "Transfer failed")}', 'error')
+
+    return redirect(url_for('dashboard'))
+
 # ── API PROXY ROUTES ──────────────────────────────────────────────────────────
+
 @app.route("/api/chat", methods=["POST"])
 @login_required
 def api_chat():

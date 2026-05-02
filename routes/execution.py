@@ -1,5 +1,6 @@
-# PROJECT: SecureWealth Twin | v3.3
+# PROJECT: SecureWealth Twin | v3.4
 import datetime
+import uuid
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -103,26 +104,6 @@ def execute_action(req: ExecuteRequest, db: Session = Depends(get_db)):
     }
     audit_log.append(audit_entry)
 
-    # DB WRITE (Sync)
-    if db is not None:
-        try:
-            log_entry = RiskAuditLog(
-                action_type=req.action_type,
-                amount=Decimal(str(req.amount)),
-                risk_score=score,
-                level=level,
-                decision=decision,
-                reason=reason,
-                signals=signals,
-                trust_pyramid=pyramid,
-            )
-            db.add(log_entry)
-            db.commit()
-            print(f"[DB] Audit log written: {decision} score={score}")
-        except Exception as e:
-            print(f"[DB] Audit write failed: {e}")
-            db.rollback()
-
     response = {
         "action_type": req.action_type,
         "amount": req.amount,
@@ -136,6 +117,27 @@ def execute_action(req: ExecuteRequest, db: Session = Depends(get_db)):
             "trust_pyramid": pyramid
         }
     }
+
+    # DB WRITE (Audit Log)
+    if db is not None:
+        try:
+            log = RiskAuditLog(
+                id=str(uuid.uuid4()),
+                action_type=req.action_type,
+                amount=Decimal(str(req.amount)),
+                risk_score=score,
+                level=level,
+                decision=decision,
+                reason=reason,
+                signals=signals,
+                trust_pyramid=pyramid,
+            )
+            db.add(log)
+            db.commit()
+            print(f"[DB] ✅ Audit log saved: {decision} | score={score} | ₹{req.amount}")
+        except Exception as e:
+            print(f"[DB] Audit write failed (non-critical): {e}")
+            db.rollback()
 
     monthly = req.monthly_amount or (req.amount / 10)
     years = req.years or 10
@@ -176,22 +178,24 @@ def get_execution_audit(db: Session = Depends(get_db)):
     if db is not None:
         try:
             rows = db.query(RiskAuditLog).order_by(RiskAuditLog.timestamp.desc()).limit(50).all()
-            return {
-                "total_evaluations": len(rows),
-                "log": [
-                    {
-                        "timestamp": r.timestamp.isoformat(),
-                        "action_type": r.action_type,
-                        "amount": float(r.amount),
-                        "risk_score": r.risk_score,
-                        "level": r.level,
-                        "decision": r.decision,
-                        "reason": r.reason,
-                        "signals": r.signals or [],
-                    }
-                    for r in rows
-                ]
-            }
+            if rows:
+                return {
+                    "total_evaluations": len(rows),
+                    "log": [
+                        {
+                            "timestamp":   r.timestamp.isoformat(),
+                            "action_type": r.action_type,
+                            "amount":      float(r.amount),
+                            "risk_score":  r.risk_score,
+                            "level":       r.level,
+                            "decision":    r.decision,
+                            "reason":      r.reason,
+                            "signals":     r.signals or [],
+                            "trust_pyramid": r.trust_pyramid or {},
+                        }
+                        for r in rows
+                    ]
+                }
         except Exception as e:
             print(f"[DB] Audit read failed: {e}")
     

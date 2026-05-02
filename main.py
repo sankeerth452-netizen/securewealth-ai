@@ -1,4 +1,4 @@
-# PROJECT: SecureWealth Twin | v3.3
+# PROJECT: SecureWealth Twin | v3.4
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     yield
     print("SecureWealth Twin shutting down")
 
-app = FastAPI(title="SecureWealth Twin", version="3.3", lifespan=lifespan)
+app = FastAPI(title="SecureWealth Twin", version="3.4", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,7 +47,7 @@ app.include_router(goals.router,        prefix="/api",     tags=["Goals"])
 
 @app.get("/")
 def root():
-    return {"status": "SecureWealth Twin v3.3 running ✅"}
+    return {"status": "SecureWealth Twin v3.4 running ✅"}
 
 @app.get("/health")
 def health():
@@ -69,5 +69,5 @@ def health():
         "db":             "connected" if db_ok else "offline",
         "tables_created": tables_ok,
         "agents":         7,
-        "version":        "3.3",
+        "version":        "3.4",
     }
