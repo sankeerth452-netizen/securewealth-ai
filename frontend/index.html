@@ -4435,7 +4435,7 @@ function startCountdown(seconds) {
   }, 1000);
 }
 
-function completeTransfer(amount) {
+async function completeTransfer(amount) {
   if (txCountdownTimer) clearInterval(txCountdownTimer);
   setPayStep(4);
   document.getElementById('transfer-step-decision').style.display = 'none';
@@ -4446,7 +4446,25 @@ function completeTransfer(amount) {
   document.getElementById('tx-succ-score').textContent = 'LOW — Transfer Safe';
   document.getElementById('tx-success-msg').textContent =
     `₹${amount.toLocaleString('en-IN')} sent to ${recipient} successfully. Verified by AI Fraud Shield.`;
-  // Add to transactions
+  
+  // 🔗 Persist to DB
+  console.log("🛠 Persisting transaction to Supabase...");
+  try {
+    const txData = {
+      amount: amount,
+      note: `Transfer to ${recipient}`,
+      sender_id: USER.id || null
+    };
+    const res = await safeFetch('/api/transactions', {
+      method: 'POST',
+      body: JSON.stringify(txData)
+    });
+    console.log("✅ Persisted:", res);
+  } catch(e) {
+    console.error("❌ Persistence failed:", e);
+  }
+
+  // Add to local transactions
   USER.transactions = USER.transactions || [];
   USER.transactions.unshift({ type:'debit', label: 'Transfer to ' + recipient, amount });
   saveUser();
