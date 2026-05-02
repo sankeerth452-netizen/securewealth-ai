@@ -1,4 +1,4 @@
-# PROJECT: SecureWealth Twin | v3.5
+# PROJECT: SecureWealth Twin | v3.6
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     yield
     print("SecureWealth Twin shutting down")
 
-app = FastAPI(title="SecureWealth Twin", version="3.5", lifespan=lifespan)
+app = FastAPI(title="SecureWealth Twin", version="3.6", lifespan=lifespan)
 
 # Build allowed origins
 allowed_origins = [
@@ -54,7 +54,7 @@ app.include_router(goals.router,        prefix="/api",     tags=["Goals"])
 
 @app.get("/")
 def root():
-    return {"status": "SecureWealth Twin v3.5 running ✅"}
+    return {"status": "SecureWealth Twin v3.6 running ✅"}
 
 @app.get("/health")
 def health():
@@ -76,5 +76,5 @@ def health():
         "db":             "connected" if db_ok else "offline",
         "tables_created": tables_ok,
         "agents":         7,
-        "version":        "3.5",
+        "version":        "3.6",
     }

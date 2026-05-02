@@ -60,7 +60,7 @@ def generate_rule_based_insights(idle_cash, investments, total_balance):
         insights.append("Large portion of funds are idle in savings accounts")
 
     # Low investment ratio
-    if investments / total_balance < 0.25:
+    if total_balance > 0 and (investments / total_balance < 0.25):
         insights.append("Low exposure to investments across accounts")
 
     # Over-diversification
@@ -91,66 +91,61 @@ def generate_suggestions(insights):
 # -----------------------------
 @router.post("/aggregate")
 def aggregate_wealth(req: AggregatorRequest):
+    try:
+        # 1. ANALYSIS
+        total_balance, breakdown, distribution, idle_cash, investments = analyze_accounts(
+            req.external_accounts
+        )
 
-    # -----------------------------
-    # ANALYSIS
-    # -----------------------------
-    total_balance, breakdown, distribution, idle_cash, investments = analyze_accounts(
-        req.external_accounts
-    )
+        insights = generate_rule_based_insights(
+            idle_cash, investments, total_balance
+        )
 
-    insights = generate_rule_based_insights(
-        idle_cash, investments, total_balance
-    )
+        suggestions = generate_suggestions(insights)
 
-    suggestions = generate_suggestions(insights)
+        # 2. AI LAYER (ENHANCEMENT)
+        ai_recommendation = "Maintain your current balance and consider moving idle cash to growth assets."
+        
+        try:
+            if client:
+                prompt = f"""
+                Analyze external accounts:
+                Total balance: ₹{total_balance}
+                Idle cash: ₹{idle_cash}
+                Investments: ₹{investments}
+                Profile Goal: {req.user_profile.get('goal')}
+                Give 2 short actionable recommendations for optimization.
+                """
 
-    # -----------------------------
-    # AI LAYER (ENHANCEMENT)
-    # -----------------------------
-    prompt = f"""
-User has multiple bank accounts.
+                ai_response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    max_tokens=120,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                ai_recommendation = ai_response.choices[0].message.content.strip()
+        except Exception as ai_err:
+            print(f"[Aggregator] AI analysis failed: {ai_err}")
 
-Total balance: ₹{total_balance}
-Idle cash: ₹{idle_cash}
-Investments: ₹{investments}
+        # 3. RESPONSE
+        return {
+            "summary": {
+                "total_external_balance": total_balance,
+                "accounts_count": len(req.external_accounts),
+                "idle_cash": idle_cash,
+                "investments": investments
+            },
+            "distribution_percent": distribution,
+            "breakdown": breakdown,
+            "insights": insights,
+            "suggestions": suggestions,
+            "ai_recommendation": ai_recommendation,
+            "note": "Simulated Account Aggregator — demo only"
+        }
 
-Profile:
-Income: ₹{req.user_profile.get('income')}
-Goal: {req.user_profile.get('goal')}
-
-Insights:
-{insights}
-
-Give 2 short, actionable recommendations for optimizing wealth across accounts.
-Avoid generic advice.
-"""
-
-    ai_response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        max_tokens=120,
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    # -----------------------------
-    # RESPONSE
-    # -----------------------------
-    return {
-        "summary": {
-            "total_external_balance": total_balance,
-            "accounts_count": len(req.external_accounts),
-            "idle_cash": idle_cash,
-            "investments": investments
-        },
-
-        "distribution_percent": distribution,
-
-        "breakdown": breakdown,
-
-        "insights": insights,
-        "suggestions": suggestions,
-
-        "ai_recommendation": ai_response.choices[0].message.content.strip(),
-
-        "note": "Simulated Account Aggregator — demo only"
-    }
+    except Exception as e:
+        print(f"[Aggregator] Error: {e}")
+        return {
+            "summary": {"total_external_balance": 0, "accounts_count": 0},
+            "ai_recommendation": "Unable to analyze accounts at this time.",
+            "note": "Error during aggregation"
+        }
