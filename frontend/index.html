@@ -1,0 +1,4508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureWealth Twin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0A0F1E;
+  --navy-light: #111827;
+  --navy-card: #141C2E;
+  --navy-border: #1E2D45;
+  --teal: #00D4AA;
+  --teal-dim: rgba(0,212,170,0.12);
+  --teal-glow: rgba(0,212,170,0.25);
+  --gold: #F5A623;
+  --gold-dim: rgba(245,166,35,0.12);
+  --red: #FF4757;
+  --red-dim: rgba(255,71,87,0.12);
+  --amber: #FFB627;
+  --amber-dim: rgba(255,182,39,0.12);
+  --blue: #4A9EFF;
+  --blue-dim: rgba(74,158,255,0.12);
+  --text-primary: #F0F4FF;
+  --text-secondary: #8892A4;
+  --text-muted: #4A5568;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --sidebar-w: 240px;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--navy);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--navy-border); border-radius: 4px; }
+
+/* ─── LOGIN SCREEN ─── */
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy);
+  position: relative;
+  overflow: hidden;
+}
+
+#login-screen::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  border-radius: 50%;
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+#login-screen::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(74,158,255,0.06) 0%, transparent 70%);
+  bottom: -50px; left: -50px;
+  border-radius: 50%;
+  animation: pulse-glow 4s ease-in-out infinite reverse;
+}
+
+@keyframes pulse-glow {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+}
+
+.login-box {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: 24px;
+  padding: 48px;
+  width: 440px;
+  position: relative;
+  z-index: 1;
+  animation: slide-up 0.6s ease;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.logo-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.login-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.form-group { margin-bottom: 18px; }
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--navy);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-dim);
+}
+
+.form-input::placeholder { color: var(--text-muted); }
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,212,170,0.3);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+.login-divider {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 20px 0;
+  position: relative;
+}
+
+.login-divider::before, .login-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%; width: 40%;
+  height: 1px;
+  background: var(--navy-border);
+}
+.login-divider::before { left: 0; }
+.login-divider::after { right: 0; }
+
+.demo-btn {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.demo-btn:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: var(--teal-dim);
+}
+
+/* ─── MAIN APP LAYOUT ─── */
+#app {
+  display: none;
+  min-height: 100vh;
+}
+
+#app.visible { display: flex; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy-card);
+  border-right: 1px solid var(--navy-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  padding: 24px 0;
+  animation: slide-in-left 0.5s ease;
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--navy-border);
+  margin-bottom: 16px;
+}
+
+.sidebar-logo .logo-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+.sidebar-logo .logo-text { font-size: 17px; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0 20px;
+  margin: 16px 0 8px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  margin: 1px 0;
+}
+
+.nav-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+
+.nav-item.active {
+  color: var(--teal);
+  background: var(--teal-dim);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--teal);
+  border-radius: 0 4px 4px 0;
+}
+
+.nav-icon { font-size: 18px; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--navy-border);
+}
+
+.user-card {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+.user-card:hover { background: rgba(255,255,255,0.04); }
+
+.user-avatar {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  color: var(--navy);
+  font-family: var(--font-display);
+}
+
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 11px; color: var(--text-muted); }
+
+/* ─── MAIN CONTENT ─── */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  padding: 32px;
+  animation: fade-in 0.5s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── PAGE HEADER ─── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.page-sub { font-size: 14px; color: var(--text-secondary); }
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color 0.2s;
+}
+
+.card:hover { border-color: rgba(255,255,255,0.08); }
+
+.card-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.card-value {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.card-delta {
+  font-size: 13px;
+  color: var(--teal);
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ─── GRID ─── */
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+/* ─── DASHBOARD ─── */
+.dna-card {
+  background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(74,158,255,0.06));
+  border: 1px solid rgba(0,212,170,0.2);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex; align-items: center; gap: 20px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dna-card::after {
+  content: '◈';
+  position: absolute;
+  right: 24px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 80px;
+  color: rgba(0,212,170,0.05);
+  font-family: var(--font-display);
+}
+
+.dna-badge {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.dna-archetype {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 4px;
+}
+.dna-desc { font-size: 13px; color: var(--text-secondary); }
+.dna-tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.dna-tag {
+  padding: 3px 10px;
+  background: var(--teal-dim);
+  border: 1px solid rgba(0,212,170,0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--teal);
+  font-weight: 500;
+}
+
+.chart-placeholder {
+  width: 100%; height: 160px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-svg { width: 100%; height: 100%; }
+
+.stat-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--navy-border);
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-row-label { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.stat-row-value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: var(--font-display); }
+
+.goal-item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--navy-border);
+}
+.goal-item:last-child { border-bottom: none; }
+.goal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.goal-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.goal-pct { font-size: 13px; color: var(--teal); font-family: var(--font-mono); }
+.progress-bar { height: 6px; background: var(--navy-border); border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--teal), var(--blue)); transition: width 1s ease; }
+.goal-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+
+/* ─── RISK SHIELD ─── */
+.risk-shield-widget {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 20px;
+  text-align: center;
+}
+
+.shield-icon {
+  font-size: 52px;
+  margin-bottom: 12px;
+  animation: shield-pulse 2s ease-in-out infinite;
+}
+
+@keyframes shield-pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.shield-score {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.shield-level {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.shield-low .shield-score { color: var(--teal); }
+.shield-low .shield-level { background: var(--teal-dim); color: var(--teal); }
+.shield-medium .shield-score { color: var(--amber); }
+.shield-medium .shield-level { background: var(--amber-dim); color: var(--amber); }
+.shield-high .shield-score { color: var(--red); }
+.shield-high .shield-level { background: var(--red-dim); color: var(--red); }
+
+.pyramid-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-top: 16px; width: 100%;
+}
+
+.pyramid-item {
+  background: var(--navy);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.pyramid-item.active {
+  border-color: var(--red);
+  background: var(--red-dim);
+}
+
+.pyramid-item.active .pyr-dot { background: var(--red); }
+
+.pyr-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  margin: 0 auto 6px;
+  transition: all 0.3s;
+}
+
+.shield-low .shield-icon { filter: drop-shadow(0 0 10px rgba(0,212,170,0.4)); }
+.shield-medium .shield-icon { filter: drop-shadow(0 0 10px rgba(255,182,39,0.4)); }
+.shield-high .shield-icon { filter: drop-shadow(0 0 10px rgba(255,71,87,0.4)); }
+
+.pyramid-item:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); }
+
+.pyr-label { font-size: 10px; color: var(--text-secondary); font-weight: 500; }
+
+/* ─── CHAT PAGE ─── */
+.chat-layout { display: flex; gap: 20px; height: calc(100vh - 140px); }
+
+.chat-main { flex: 1; display: flex; flex-direction: column; }
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.msg {
+  display: flex; gap: 12px; align-items: flex-start;
+  animation: msg-in 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+
+.msg.ai .msg-avatar {
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  color: var(--navy);
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.msg.user .msg-avatar {
+  background: linear-gradient(135deg, var(--blue), #2563eb);
+  color: white;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.msg-bubble {
+  max-width: 70%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.msg.ai .msg-bubble {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-top-left-radius: 4px;
+  color: var(--text-primary);
+}
+
+.msg.user .msg-bubble {
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  color: var(--navy);
+  font-weight: 500;
+  border-top-right-radius: 4px;
+}
+
+/* .why-btn styles moved to bottom */
+
+
+/* ─── RISK PANEL IN CHAT ─── */
+.risk-panel {
+  background: var(--navy-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--navy-border);
+}
+
+.risk-panel.warn { border-color: var(--amber); background: rgba(255,182,39,0.04); }
+.risk-panel.block { border-color: var(--red); background: rgba(255,71,87,0.04); }
+.risk-panel.allow { border-color: var(--teal); background: rgba(0,212,170,0.04); }
+
+.risk-panel-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+
+.risk-badge {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+.badge-allow { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.3); }
+.badge-warn { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,182,39,0.3); }
+.badge-block { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+
+.risk-score-display {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 800;
+}
+
+.signals-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.signal-tag {
+  padding: 4px 10px;
+  background: var(--navy);
+  border: 1px solid var(--navy-border);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ─── CHAT INPUT ─── */
+.chat-input-area {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-input-area:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-dim);
+}
+
+.chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.chat-input::placeholder { color: var(--text-muted); }
+
+.send-btn {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  border: none;
+  border-radius: 10px;
+  color: var(--navy);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,212,170,0.3); }
+
+.why-btn:hover {
+  opacity: 1;
+}
+
+.ai-reason {
+  margin-top: 10px;
+  padding: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.agent-flow {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.agent-flow .step {
+  margin-bottom: 8px;
+  opacity: 0.85;
+}
+
+.agent-flow .final {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.tx-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--navy-border);
+  font-size: 13px;
+}
+.tx-row:last-child { border-bottom: none; }
+.tx-label { color: var(--text-primary); font-weight: 500; }
+.debit { color: var(--red); font-weight: 600; }
+.credit { color: var(--teal); font-weight: 600; }
+
+.chat-sidebar-panel {
+  width: 280px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.quick-prompts { display: flex; flex-direction: column; gap: 8px; }
+
+.quick-prompt {
+  padding: 10px 14px;
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.quick-prompt:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: var(--teal-dim);
+}
+
+/* ─── SIMULATOR PAGE ─── */
+.simulator-controls {
+  display: flex; flex-direction: column; gap: 20px;
+  margin-bottom: 24px;
+}
+
+.slider-label {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.slider-name { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+.slider-val {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700;
+  color: var(--teal);
+}
+
+input[type=range] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--navy-border);
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  cursor: pointer;
+  box-shadow: 0 0 0 4px var(--teal-dim);
+  transition: box-shadow 0.2s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 6px var(--teal-glow);
+}
+
+.sim-summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+
+.sim-card {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+}
+
+.sim-card-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.sim-card-val { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+
+.nudge-banner {
+  background: linear-gradient(135deg, rgba(245,166,35,0.1), rgba(245,166,35,0.05));
+  border: 1px solid rgba(245,166,35,0.3);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: var(--gold);
+}
+
+.sim-chart-area {
+  width: 100%; height: 260px;
+  position: relative;
+}
+
+/* ─── RISK ALERTS PAGE ─── */
+.alert-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px;
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.alert-item:hover { border-color: rgba(255,255,255,0.1); }
+.alert-item.alert-block { border-left: 3px solid var(--red); }
+.alert-item.alert-warn { border-left: 3px solid var(--amber); }
+.alert-item.alert-allow { border-left: 3px solid var(--teal); }
+
+.alert-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.alert-body { flex: 1; min-width: 0; }
+.alert-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+.alert-meta { font-size: 12px; color: var(--text-muted); }
+.alert-score {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ─── PROFILE PAGE ─── */
+.profile-header-card {
+  background: linear-gradient(135deg, rgba(0,212,170,0.06), rgba(74,158,255,0.04));
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius);
+  padding: 28px;
+  display: flex; align-items: center; gap: 24px;
+  margin-bottom: 24px;
+}
+
+.profile-avatar {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800;
+  color: var(--navy);
+  font-family: var(--font-display);
+  flex-shrink: 0;
+}
+
+.profile-name { font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.profile-role { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; }
+
+.profile-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+}
+
+.consent-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--navy-border);
+}
+.consent-item:last-child { border-bottom: none; }
+.consent-label { font-size: 14px; color: var(--text-primary); margin-bottom: 2px; }
+.consent-desc { font-size: 12px; color: var(--text-muted); }
+
+.toggle {
+  width: 44px; height: 24px;
+  background: var(--teal);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform 0.2s;
+}
+
+.toggle.off { background: var(--navy-border); }
+.toggle.off::after { transform: translateX(20px); }
+
+/* ─── DISCLAIMER ─── */
+.disclaimer {
+  text-align: center;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--navy-border);
+  margin-top: auto;
+}
+
+/* ─── LOADING DOTS ─── */
+.typing-dots {
+  display: flex; gap: 4px; align-items: center;
+  padding: 8px 0;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-bounce {
+  0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ─── SECTION TITLE ─── */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--navy-border);
+}
+
+/* ─── MISC ─── */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+}
+
+.tag-green { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(0,212,170,0.2); }
+.tag-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,71,87,0.2); }
+.tag-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,182,39,0.2); }
+.tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,158,255,0.2); }
+
+.btn-sm {
+  padding: 8px 16px;
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.btn-sm:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+.btn-sm.active { background: var(--teal); color: var(--navy); border-color: var(--teal); }
+
+.divider { height: 1px; background: var(--navy-border); margin: 20px 0; }
+
+/* ─── WIZARD ─── */
+.wizard-steps { display:flex; align-items:center; margin-bottom:28px; }
+.wizard-step { width:28px;height:28px;border-radius:50%;background:var(--navy-border);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--font-display);flex-shrink:0;transition:all 0.3s; }
+.wizard-step.active { background:var(--teal);color:var(--navy); }
+.wizard-step.done { background:rgba(0,212,170,0.4);color:var(--teal); }
+.wizard-step-line { flex:1;height:2px;background:var(--navy-border);margin:0 8px; }
+.risk-choice { background:var(--navy);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;transition:all 0.2s; }
+.risk-choice:hover { border-color:var(--teal); }
+.risk-choice.active { border-color:var(--teal);background:var(--teal-dim); }
+.skeleton { background:linear-gradient(90deg,var(--navy-border) 25%,rgba(255,255,255,0.05) 50%,var(--navy-border) 75%);background-size:200% 100%;animation:skeleton-shimmer 1.5s infinite;border-radius:6px;color:transparent!important; }
+@keyframes skeleton-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.wizard-page { animation:fade-in 0.3s ease; }
+.form-input option { background:var(--navy-card); }
+/* ─────────────────────────────────────────────────────────────
+   SECUREWEALTH TWIN v2.0 — NEW COMPONENTS
+   ───────────────────────────────────────────────────────────── */
+
+/* 1. PAYMENT STEPPER */
+.payment-stepper {
+  display: flex; align-items: center;
+  justify-content: center;
+  padding: 20px 0 28px;
+  position: relative;
+}
+.ps-step {
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; z-index: 1;
+}
+.ps-circle {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--navy-border);
+  border: 2px solid var(--navy-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--text-muted);
+  transition: all 0.4s ease;
+  position: relative;
+}
+.ps-label {
+  font-size: 10px; font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-top: 6px; white-space: nowrap;
+  transition: color 0.4s ease;
+}
+.ps-line {
+  width: 80px; height: 2px;
+  background: var(--navy-border);
+  margin: 0 6px; margin-bottom: 22px;
+  transition: background 0.4s ease;
+  flex-shrink: 0;
+}
+.ps-step.active .ps-circle {
+  background: linear-gradient(135deg, var(--gold), #d4890a);
+  border-color: var(--gold);
+  color: #000;
+  box-shadow: 0 0 20px rgba(240,165,0,0.4);
+  animation: step-pulse 2s ease-in-out infinite;
+}
+.ps-step.active .ps-label { color: var(--gold); }
+.ps-step.done .ps-circle {
+  background: var(--teal); border-color: var(--teal); color: var(--navy);
+}
+.ps-step.done .ps-label { color: var(--teal); }
+.ps-line.done { background: var(--teal); }
+.ps-line.active { background: linear-gradient(90deg, var(--teal), var(--gold)); }
+
+@keyframes step-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(240,165,0,0.4); }
+  50%      { box-shadow: 0 0 35px rgba(240,165,0,0.7); }
+}
+
+/* 2. AI SCANNING OVERLAY */
+.ai-overlay {
+  position: fixed; inset: 0;
+  background: rgba(8,12,16,0.95);
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  animation: fade-in 0.3s ease;
+}
+.ai-overlay-box {
+  text-align: center; padding: 48px 40px;
+  max-width: 460px; width: 90%;
+}
+.ai-brain-icon {
+  font-size: 72px; margin-bottom: 24px;
+  display: block;
+  animation: brain-pulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 24px rgba(240,165,0,0.6));
+}
+@keyframes brain-pulse {
+  0%,100% { transform: scale(1);   filter: drop-shadow(0 0 24px rgba(240,165,0,0.6)); }
+  50%      { transform: scale(1.1); filter: drop-shadow(0 0 48px rgba(240,165,0,0.9)); }
+}
+.ai-overlay-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 8px;
+}
+.ai-scanning-text {
+  font-size: 14px; color: var(--gold);
+  min-height: 22px; margin-bottom: 28px;
+  font-family: var(--font-mono);
+  animation: text-flicker 0.4s ease;
+}
+@keyframes text-flicker {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ai-progress-track {
+  height: 6px; background: var(--navy-border);
+  border-radius: 10px; overflow: hidden;
+  margin-bottom: 20px;
+}
+.ai-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--gold));
+  border-radius: 10px; width: 0%;
+  transition: width 0.3s ease;
+}
+.ai-progress-pct {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-muted); margin-top: -12px; margin-bottom: 16px;
+}
+
+/* 3. DECISION CARD */
+.decision-card {
+  border-radius: var(--radius); padding: 28px;
+  animation: scale-in 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  margin-bottom: 20px;
+}
+@keyframes scale-in {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.decision-card.allow {
+  background: rgba(0,212,170,0.06);
+  border: 2px solid var(--teal);
+  box-shadow: 0 0 40px rgba(0,212,170,0.15);
+}
+.decision-card.warn {
+  background: rgba(255,182,39,0.06);
+  border: 2px solid var(--amber);
+  box-shadow: 0 0 40px rgba(255,182,39,0.15);
+}
+.decision-card.block {
+  background: rgba(255,71,87,0.06);
+  border: 2px solid var(--red);
+  box-shadow: 0 0 40px rgba(255,71,87,0.15);
+}
+.decision-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 24px; border-radius: 50px;
+  font-family: var(--font-display); font-size: 18px; font-weight: 800;
+  letter-spacing: 0.05em; margin-bottom: 20px;
+}
+.decision-badge.allow { background: var(--teal-dim); color: var(--teal); }
+.decision-badge.warn  { background: var(--amber-dim); color: var(--amber); }
+.decision-badge.block { background: var(--red-dim);   color: var(--red); }
+
+/* 4. RISK GAUGE (SVG arc) */
+.risk-gauge-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  margin: 16px 0;
+}
+.risk-gauge-wrap svg { overflow: visible; }
+.risk-gauge-value {
+  font-family: var(--font-display); font-size: 36px; font-weight: 800;
+  text-align: center; margin-top: -8px;
+}
+.risk-gauge-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; text-align: center; margin-top: 2px;
+}
+
+/* 5. TRUST PYRAMID */
+.trust-pyramid {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; margin: 16px 0; width: 100%;
+}
+.tp-layer {
+  border-radius: 8px; padding: 8px 16px;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.3s ease;
+  font-size: 13px; font-weight: 600;
+  animation: slide-up 0.4s ease forwards;
+  opacity: 0;
+}
+.tp-layer:nth-child(1) { width: 60%;  animation-delay: 0.1s; }
+.tp-layer:nth-child(2) { width: 72%;  animation-delay: 0.2s; }
+.tp-layer:nth-child(3) { width: 86%;  animation-delay: 0.3s; }
+.tp-layer:nth-child(4) { width: 100%; animation-delay: 0.4s; }
+.tp-layer.safe  { background: rgba(0,212,170,0.12); border: 1px solid rgba(0,212,170,0.3);  color: var(--teal); }
+.tp-layer.risk  { background: rgba(255,71,87,0.12);  border: 1px solid rgba(255,71,87,0.3);   color: var(--red); }
+.tp-layer.warn  { background: rgba(255,182,39,0.12); border: 1px solid rgba(255,182,39,0.3); color: var(--amber); }
+.tp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tp-layer.safe .tp-dot  { background: var(--teal); box-shadow: 0 0 6px var(--teal); }
+.tp-layer.risk .tp-dot  { background: var(--red);  box-shadow: 0 0 6px var(--red); }
+.tp-layer.warn .tp-dot  { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+/* 6. BANK CARD */
+.bank-card {
+  width: 100%; max-width: 360px;
+  border-radius: 20px; padding: 28px;
+  background: linear-gradient(135deg, #0d1f35 0%, #1a1f3a 50%, #0d1f2a 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  position: relative; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  margin: 0 auto 20px;
+}
+.bank-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.06) 50%, transparent 65%);
+  background-size: 200% 100%;
+  animation: card-shimmer 3s ease-in-out infinite;
+}
+@keyframes card-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.bank-card-logo {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px;
+}
+.bank-card-brand {
+  font-family: var(--font-display); font-size: 16px; font-weight: 800;
+  color: var(--gold);
+}
+.ai-protected-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.3);
+  padding: 4px 10px; border-radius: 20px; font-size: 10px;
+  color: var(--teal); font-weight: 600;
+}
+.ai-protected-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--teal);
+  animation: dot-blink 1.5s ease-in-out infinite;
+}
+@keyframes dot-blink {
+  0%,100% { opacity: 1; box-shadow: 0 0 4px var(--teal); }
+  50%      { opacity: 0.4; box-shadow: none; }
+}
+.bank-card-number {
+  font-family: var(--font-mono); font-size: 18px;
+  letter-spacing: 0.2em; color: rgba(255,255,255,0.8);
+  margin-bottom: 20px;
+}
+.bank-card-footer {
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+.bank-card-label { font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
+.bank-card-value { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); font-family: var(--font-display); }
+.bank-card-balance { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: white; }
+
+/* 7. ACTIVITY FEED */
+.activity-feed { display: flex; flex-direction: column; gap: 0; }
+.activity-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--navy-border);
+  animation: feed-slide-in 0.4s ease forwards;
+  opacity: 0;
+}
+.activity-item:last-child { border-bottom: none; }
+@keyframes feed-slide-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.activity-item:nth-child(1) { animation-delay: 0.0s; }
+.activity-item:nth-child(2) { animation-delay: 0.1s; }
+.activity-item:nth-child(3) { animation-delay: 0.2s; }
+.activity-item:nth-child(4) { animation-delay: 0.3s; }
+.activity-item:nth-child(5) { animation-delay: 0.4s; }
+.activity-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.activity-dot.allow { background: var(--teal); box-shadow: 0 0 8px rgba(0,212,170,0.5); }
+.activity-dot.warn  { background: var(--amber); box-shadow: 0 0 8px rgba(255,182,39,0.5); }
+.activity-dot.block { background: var(--red);   box-shadow: 0 0 8px rgba(255,71,87,0.5); }
+.activity-dot.info  { background: var(--blue);  box-shadow: 0 0 8px rgba(74,158,255,0.5); }
+.activity-content { flex: 1; min-width: 0; }
+.activity-msg { font-size: 12px; color: var(--text-primary); font-weight: 500; line-height: 1.4; }
+.activity-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.activity-agent {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; padding: 2px 7px; border-radius: 10px;
+  flex-shrink: 0;
+}
+.activity-agent.fraud  { background: var(--red-dim);   color: var(--red); }
+.activity-agent.wealth { background: var(--teal-dim);  color: var(--teal); }
+.activity-agent.risk   { background: var(--amber-dim); color: var(--amber); }
+.activity-agent.ai     { background: var(--blue-dim);  color: var(--blue); }
+
+/* 8. QUICK ACTION BAR */
+.quick-action-bar {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.qa-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px;
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: 50px;
+  color: var(--text-primary);
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.qa-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240,165,0,0.15);
+}
+.qa-btn.primary {
+  background: linear-gradient(135deg, var(--gold), #d4890a);
+  border-color: var(--gold); color: #000; font-weight: 700;
+}
+.qa-btn.primary:hover {
+  box-shadow: 0 8px 24px rgba(240,165,0,0.4);
+  color: #000;
+}
+.qa-icon { font-size: 16px; }
+
+/* 9. SIGNAL PILLS */
+.signal-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: var(--navy);
+  border: 1px solid var(--navy-border);
+  border-radius: 20px; font-size: 11px;
+  color: var(--text-secondary);
+  animation: pill-slide-in 0.3s ease forwards;
+  opacity: 0;
+}
+@keyframes pill-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.signal-pill.danger { border-color: rgba(255,71,87,0.4); color: var(--red); background: var(--red-dim); }
+.signal-pill.warn   { border-color: rgba(255,182,39,0.4); color: var(--amber); background: var(--amber-dim); }
+
+/* 10. COUNTDOWN TIMER */
+.countdown-ring {
+  position: relative; width: 80px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+}
+.countdown-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.countdown-ring .ring-bg  { stroke: var(--navy-border); fill: none; }
+.countdown-ring .ring-fill { fill: none; stroke-linecap: round; stroke-dasharray: 220; transition: stroke-dashoffset 1s linear; }
+.countdown-number {
+  font-family: var(--font-display); font-size: 22px; font-weight: 800;
+  color: var(--amber); position: relative; z-index: 1;
+}
+
+/* 11. RISK METER WIDGET */
+.risk-meter-widget {
+  position: fixed; top: 20px; right: 28px;
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: 14px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  z-index: 50; cursor: pointer;
+  transition: all 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  animation: slide-up 0.5s ease 0.5s forwards; opacity: 0;
+}
+.risk-meter-widget:hover { border-color: var(--gold); transform: translateY(-1px); }
+.risk-meter-bar {
+  width: 60px; height: 6px; background: var(--navy-border);
+  border-radius: 10px; overflow: hidden;
+}
+.risk-meter-fill {
+  height: 100%; border-radius: 10px;
+  transition: width 1s ease, background 1s ease;
+}
+.risk-meter-text {
+  font-family: var(--font-display); font-size: 11px;
+  font-weight: 700; letter-spacing: 0.05em;
+}
+
+/* 12. TRANSFER PAGE SPECIFIC */
+.transfer-layout {
+  display: grid; grid-template-columns: 1fr 400px;
+  gap: 24px; align-items: start;
+}
+.recipient-card {
+  background: linear-gradient(135deg, #0d1a2e, #141c2e);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius); padding: 20px;
+  margin-bottom: 16px;
+}
+.amount-display {
+  text-align: center; padding: 24px 0;
+}
+.amount-big {
+  font-family: var(--font-display); font-size: 48px;
+  font-weight: 800; color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.amount-label {
+  font-size: 12px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.pin-inputs {
+  display: flex; gap: 12px; justify-content: center;
+  margin: 16px 0;
+}
+.pin-dot {
+  width: 48px; height: 56px;
+  background: var(--navy);
+  border: 2px solid var(--navy-border);
+  border-radius: 12px;
+  font-family: var(--font-mono); font-size: 28px;
+  color: var(--text-primary); text-align: center;
+  outline: none; caret-color: var(--gold);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pin-dot:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(240,165,0,0.2);
+}
+.confirm-anyway-btn {
+  width: 100%; padding: 14px;
+  background: transparent;
+  border: 2px solid var(--amber);
+  border-radius: var(--radius-sm); color: var(--amber);
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.confirm-anyway-btn:hover:not(:disabled) {
+  background: var(--amber-dim);
+  box-shadow: 0 0 20px rgba(255,182,39,0.2);
+}
+.confirm-anyway-btn:disabled {
+  opacity: 0.4; cursor: not-allowed;
+}
+.send-btn-gold {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--gold), #d4890a);
+  border: none; border-radius: var(--radius-sm);
+  color: #000; font-family: var(--font-display); font-size: 16px;
+  font-weight: 800; cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.send-btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(240,165,0,0.4);
+}
+.ai-quote-box {
+  background: rgba(240,165,0,0.06);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 12px 12px 0;
+  padding: 14px 16px; margin: 16px 0;
+  font-size: 13px; color: var(--text-primary);
+  font-style: italic; line-height: 1.6;
+}
+.success-screen {
+  text-align: center; padding: 40px 20px;
+  animation: scale-in 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.success-icon { font-size: 64px; margin-bottom: 16px; display: block; }
+.counter-number { font-variant-numeric: tabular-nums; }
+
+/* 13. SPENDING INTELLIGENCE BARS */
+.spend-bar-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.spend-bar-label { font-size: 12px; color: var(--text-secondary); width: 90px; flex-shrink: 0; }
+.spend-bar-track { flex: 1; height: 8px; background: var(--navy-border); border-radius: 10px; overflow: hidden; }
+.spend-bar-fill { height: 100%; border-radius: 10px; transition: width 1.2s ease; }
+.spend-bar-val { font-size: 11px; color: var(--text-muted); width: 46px; text-align: right; flex-shrink: 0; }
+
+/* 14. WHY TOOLTIP & MISC */
+.why-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 20px;
+  background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2);
+  color: var(--teal); font-size: 11px; font-weight: 500;
+  cursor: pointer; margin-left: 6px;
+  transition: all 0.2s; vertical-align: middle;
+  opacity: 0.8;
+}
+.why-tooltip {
+  display: none; font-size: 12px;
+  color: var(--text-secondary); margin-top: 8px;
+  padding: 10px 12px; background: var(--navy);
+  border-radius: 10px; border: 1px solid var(--navy-border);
+  line-height: 1.5;
+}
+.ai-insight-bubble {
+  background: linear-gradient(135deg, rgba(74,158,255,0.08), rgba(0,212,170,0.06));
+  border: 1px solid rgba(74,158,255,0.2);
+  border-radius: var(--radius-sm); padding: 14px;
+  font-size: 13px; line-height: 1.5; color: var(--text-primary);
+  margin-top: 12px;
+}
+
+/* OTP Modal */
+.otp-modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fade-in 0.3s ease;
+}
+
+.otp-box {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  padding: 32px;
+  border-radius: 24px;
+  text-align: center;
+  width: 340px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.otp-box h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.otp-box p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.otp-input-field {
+  width: 100%;
+  background: var(--navy);
+  border: 1px solid var(--navy-border);
+  border-radius: 12px;
+  padding: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  text-align: center;
+  letter-spacing: 0.3em;
+  margin-bottom: 24px;
+  outline: none;
+}
+
+.otp-input-field:focus { border-color: var(--teal); }
+
+.otp-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--teal), #00A882);
+  border: none;
+  border-radius: 12px;
+  color: var(--navy);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.otp-btn:hover { transform: translateY(-2px); }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="login-screen">
+  <div class="login-box" style="width:480px;">
+    <div class="login-logo"><div class="logo-icon">🛡</div><div class="logo-text">SecureWealth Twin</div></div>
+    <div class="wizard-steps">
+      <div class="wizard-step active" id="step-dot-1">1</div>
+      <div class="wizard-step-line"></div>
+      <div class="wizard-step" id="step-dot-2">2</div>
+      <div class="wizard-step-line"></div>
+      <div class="wizard-step" id="step-dot-3">3</div>
+    </div>
+    <div id="wizard-step-1" class="wizard-page">
+      <div class="login-title">Who are you?</div>
+      <div class="login-sub">Let's personalize your experience</div>
+      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="f-name" placeholder="Priya Sharma" type="text"></div>
+      <div class="form-group"><label class="form-label">Age</label><input class="form-input" id="f-age" placeholder="28" type="number" min="18" max="80"></div>
+      <div class="form-group"><label class="form-label">Investment Experience</label>
+        <select class="form-input" id="f-exp">
+          <option value="none">None — Just getting started</option>
+          <option value="beginner" selected>Beginner — Basic knowledge</option>
+          <option value="intermediate">Intermediate — Some experience</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="nextWizardStep()">Continue →</button>
+      <div class="login-divider">or</div>
+      <button class="demo-btn" onclick="fillDemo()">🚀 Use Demo Profile</button>
+    </div>
+    <div id="wizard-step-2" class="wizard-page" style="display:none;">
+      <div class="login-title">Your finances</div>
+      <div class="login-sub">We use this to personalize your advice</div>
+      <div class="form-group"><label class="form-label">Monthly Income (₹)</label><input class="form-input" id="f-income" placeholder="55000" type="number"></div>
+      <div class="form-group"><label class="form-label">Monthly Expenses (₹)</label><input class="form-input" id="f-expenses" placeholder="35000" type="number"></div>
+      <div class="form-group"><label class="form-label">Current Savings (₹)</label><input class="form-input" id="f-savings" placeholder="120000" type="number"></div>
+      <div class="form-group"><label class="form-label">Existing Investments (₹)</label><input class="form-input" id="f-investments" placeholder="60000" type="number"></div>
+      <div style="display:flex;gap:10px;"><button class="demo-btn" style="width:auto;padding:12px 20px;" onclick="prevWizardStep()">← Back</button><button class="btn-primary" onclick="nextWizardStep()">Continue →</button></div>
+    </div>
+    <div id="wizard-step-3" class="wizard-page" style="display:none;">
+      <div class="login-title">Your goals</div>
+      <div class="login-sub">What are you building wealth for?</div>
+      <div class="form-group"><label class="form-label">Primary Goal</label>
+        <select class="form-input" id="f-goal">
+          <option value="Buy a house">🏠 Buy a House</option>
+          <option value="Retirement planning">🌴 Retirement Planning</option>
+          <option value="Children's education">📚 Children's Education</option>
+          <option value="Build emergency fund">🛡 Emergency Fund</option>
+          <option value="Start a business">💼 Start a Business</option>
+          <option value="Wealth building">📈 General Wealth Building</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Goal Timeline (years)</label><input class="form-input" id="f-timeline" placeholder="7" type="number" min="1" max="40"></div>
+      <div class="form-group"><label class="form-label">Risk Appetite</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px;">
+          <div class="risk-choice" id="risk-low" onclick="selectRisk('low')"><div style="font-size:18px;margin-bottom:4px;">🛡</div><div style="font-size:12px;font-weight:600;">Low</div><div style="font-size:10px;color:var(--text-muted);">Safe &amp; stable</div></div>
+          <div class="risk-choice active" id="risk-medium" onclick="selectRisk('medium')"><div style="font-size:18px;margin-bottom:4px;">⚖️</div><div style="font-size:12px;font-weight:600;">Medium</div><div style="font-size:10px;color:var(--text-muted);">Balanced</div></div>
+          <div class="risk-choice" id="risk-high" onclick="selectRisk('high')"><div style="font-size:18px;margin-bottom:4px;">🚀</div><div style="font-size:12px;font-weight:600;">High</div><div style="font-size:10px;color:var(--text-muted);">Growth focused</div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;"><button class="demo-btn" style="width:auto;padding:12px 20px;" onclick="prevWizardStep()">← Back</button><button class="btn-primary" id="submit-btn" onclick="submitProfile()">🧬 Analyze My Profile</button></div>
+    </div>
+    <div id="wizard-loading" style="display:none;text-align:center;padding:40px 0;">
+      <div style="font-size:48px;margin-bottom:16px;animation:shield-pulse 1s ease-in-out infinite;">🧬</div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:8px;" id="loading-text">Analyzing your profile...</div>
+      <div style="font-size:13px;color:var(--text-muted);">Building your Financial DNA</div>
+      <div style="margin-top:20px;display:flex;justify-content:center;gap:4px;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    </div>
+    <div style="margin-top:16px;font-size:11px;color:var(--text-muted);text-align:center;">🔒 Simulation &amp; demo purposes only. Not real financial advice.</div>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🛡</div>
+      <div class="logo-text">SecureWealth</div>
+    </div>
+
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="switchPage('dashboard', this)">
+      <span class="nav-icon">◈</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="switchPage('chat', this)">
+      <span class="nav-icon">◎</span> Wealth Coach
+    </div>
+
+    <div class="nav-section-label">Planning</div>
+    <div class="nav-item" onclick="switchPage('simulator', this)">
+      <span class="nav-icon">◐</span> Simulator
+    </div>
+    <div class="nav-item" onclick="switchPage('networth', this)">
+      <span class="nav-icon">◉</span> Net Worth
+    </div>
+
+    <div class="nav-section-label">Transfers</div>
+    <div class="nav-item" onclick="switchPage('transfer', this)" id="nav-transfer">
+      <span class="nav-icon">↑</span> Send Money
+    </div>
+
+    <div class="nav-section-label">Security</div>
+    <div class="nav-item" onclick="switchPage('alerts', this)">
+      <span class="nav-icon">◌</span> Risk Alerts
+      <span id="alert-badge" style="margin-left:auto;background:var(--red);color:white;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;display:none;">0</span>
+    </div>
+
+    <div class="nav-section-label">Account</div>
+    <div class="nav-item" onclick="switchPage('profile', this)">
+      <span class="nav-icon">○</span> Profile
+    </div>
+
+    <div class="sidebar-footer">
+      <button onclick="resetUser()" style="margin-top:10px; width:100%; background:var(--bg-lighter); color:var(--text-secondary); border:1px solid var(--border); padding:6px; border-radius:6px; cursor:pointer; font-size:11px;">Reset Profile (Test)</button>
+      <div style="height:12px;"></div>
+      <div class="user-card">
+        <div class="user-avatar" id="sidebar-avatar">P</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">...</div>
+          <div class="user-role" id="sidebar-role">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <!-- Quick Action Bar -->
+      <div class="quick-action-bar">
+        <button class="qa-btn primary" onclick="switchPage('transfer', document.getElementById('nav-transfer'))"><span class="qa-icon">↑</span> Send Money</button>
+        <button class="qa-btn" onclick="switchPage('simulator', document.querySelector('.nav-item:nth-child(6)'))"><span class="qa-icon">📊</span> Simulate SIP</button>
+        <button class="qa-btn" onclick="simulateFraud()"><span class="qa-icon">🚨</span> Test Fraud AI</button>
+        <button class="qa-btn" onclick="switchPage('alerts', document.querySelector('.nav-item:nth-child(9)'))"><span class="qa-icon">🛡</span> Risk Alerts</button>
+        <button class="qa-btn" onclick="switchPage('chat', document.querySelector('.nav-item:nth-child(3)'))"><span class="qa-icon">💬</span> Ask Coach</button>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="dash-greeting">Good morning 👋</div>
+          <div class="page-sub">Here's your financial health overview for today</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-sm" style="border-color:var(--red); color:var(--red); font-weight:700;" onclick="simulateFraud()">🚨 Simulate Fraud</button>
+          <button class="btn-sm" onclick="switchPage('chat', document.querySelector('.nav-item:nth-child(3)'))">Ask Wealth Coach →</button>
+        </div>
+      </div>
+
+      <!-- DNA Card -->
+      <div class="dna-card">
+        <div class="dna-badge">🧬</div>
+        <div class="dna-info">
+          <div class="dna-archetype" id="dash-archetype">Loading...</div>
+          <div class="dna-desc" id="dash-desc">Analyzing your profile...</div>
+          <div class="dna-tags" id="dash-tags"></div>
+        </div>
+      </div>
+
+      <!-- Dashboard: 2-col layout with activity feed on right -->
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;margin-bottom:24px;align-items:start;">
+        <div>
+          <!-- Bank Card Widget -->
+          <div class="bank-card" style="margin-bottom:20px;">
+            <div class="bank-card-logo">
+              <div class="bank-card-brand">NOVA Bank</div>
+              <div class="ai-protected-badge"><div class="ai-protected-dot"></div>AI Protected</div>
+            </div>
+            <div class="bank-card-number">NOVA ···· ···· 4821</div>
+            <div class="bank-card-footer">
+              <div>
+                <div class="bank-card-label">Account Holder</div>
+                <div class="bank-card-value" id="dash-card-name">—</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="bank-card-label">Net Worth</div>
+                <div class="bank-card-balance counter-number" id="dash-card-nw">₹—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid-5" style="margin-bottom:0;">
+            <div class="card">
+              <div class="card-label">Net Worth</div>
+              <div class="card-value counter-number" id="dash-networth">...</div>
+              <div class="card-delta" id="dash-nw-delta">Your total wealth</div>
+            </div>
+            <div class="card">
+              <div class="card-label">Behavior Score</div>
+              <div class="card-value counter-number" id="dash-behavior-score">...</div>
+              <div class="card-delta" id="dash-behavior-explanation" style="font-size:11px;line-height:1.3;margin-top:4px;">Analyzing...</div>
+            </div>
+            <div class="card">
+              <div class="card-label">Savings</div>
+              <div class="card-value counter-number" id="dash-savings">...</div>
+              <div class="card-delta" id="dash-savings-rate">Total Savings</div>
+            </div>
+            <div class="card">
+              <div class="card-label">Income</div>
+              <div class="card-value counter-number" id="dash-income">...</div>
+              <div class="card-delta" style="color:var(--text-secondary)">Monthly</div>
+            </div>
+            <div class="card">
+              <div class="card-label">Risk Level</div>
+              <div class="card-value" style="color:var(--teal)" id="dash-risk-level">LOW</div>
+              <div class="card-delta" id="dash-risk-delta">🛡 All clear</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live AI Activity Feed -->
+        <div class="card" style="padding:16px;">
+          <div class="section-title" style="font-size:13px;">🤖 Live AI Activity</div>
+          <div style="font-size:10px;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+            <span style="width:6px;height:6px;background:var(--teal);border-radius:50%;animation:dot-blink 1.5s infinite;"></span>
+            Agents monitoring in real-time
+          </div>
+          <div class="activity-feed" id="activity-feed">
+            <div style="font-size:12px;color:var(--text-muted);padding:12px 0;">Loading agent activity...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OLD Stats Row (hidden, kept for compat) -->
+      <div class="grid-5" style="display:none;">
+        <!-- Duplicate hidden stat cards (original IDs used by JS) -->
+        <div class="card" style="display:none;">
+          <div class="card-value" id="_dash-networth-hidden">...</div>
+        </div>
+        <div class="card"><!-- compat -->
+          <div class="card-label">Savings</div>
+          <div class="card-value" id="dash-savings">...</div>
+          <div class="card-delta" id="dash-savings-rate">Total Savings</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Income</div>
+          <div class="card-value" id="dash-income">...</div>
+          <div class="card-delta" style="color:var(--text-secondary)">Monthly</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Risk Level</div>
+          <div class="card-value" style="color:var(--teal)" id="dash-risk-level">LOW</div>
+          <div class="card-delta" id="dash-risk-delta">🛡 All clear</div>
+        </div>
+      </div>
+
+      <!-- Chart + Goals + Shield -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 280px;gap:20px;margin-bottom:24px;">
+
+        <!-- Wealth Chart -->
+        <div class="card">
+          <div class="section-title">Wealth Growth</div>
+          <div class="chart-placeholder">
+            <svg class="chart-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00D4AA" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#00D4AA" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path id="dash-chart-area" d="M0,140 C40,130 80,120 120,100 C160,80 200,70 240,55 C280,40 320,30 360,20 L400,15 L400,160 L0,160 Z" fill="url(#chartGrad)"/>
+              <path id="dash-chart-line" d="M0,140 C40,130 80,120 120,100 C160,80 200,70 240,55 C280,40 320,30 360,20 L400,15" fill="none" stroke="#00D4AA" stroke-width="2.5" stroke-linecap="round"/>
+              <circle id="dash-chart-dot" cx="400" cy="15" r="4" fill="#00D4AA"/>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <span style="font-size:11px;color:var(--text-muted)">Now</span>
+            <span style="font-size:11px;color:var(--text-muted)">+12 Months</span>
+          </div>
+        </div>
+
+        <!-- Goals -->
+        <div class="card">
+          <div class="section-title">Goals Progress</div>
+          <div id="dash-goals">
+            <div style="padding:10px;text-align:center;color:var(--text-muted);font-size:13px;">Loading goals...</div>
+          </div>
+        </div>
+
+        <!-- Risk Shield -->
+        <div class="card" style="padding:16px;">
+          <div class="section-title" style="font-size:13px;">Security Status</div>
+          <div class="risk-shield-widget shield-low" id="dash-shield-widget" style="transition: all 0.5s ease;">
+            <div class="shield-icon" id="dash-shield-icon">🛡️</div>
+            <div class="shield-score" id="dash-shield-score">LOW</div>
+            <div class="shield-level" id="dash-shield-level">All Clear</div>
+          </div>
+          <div id="dash-security-explanation" style="font-size:11px; color:var(--text-secondary); text-align:center; margin: 10px 0; min-height: 32px; line-height: 1.4;">
+            🟢 Your account activity is consistent with your usual patterns.
+          </div>
+          <div class="pyramid-grid" id="dash-pyramid">
+            <div class="pyramid-item active" onclick="showSecurityDetail('identity')" style="cursor:pointer;">
+              <div class="pyr-dot"></div>
+              <div class="pyr-label">Identity</div>
+            </div>
+            <div class="pyramid-item active" onclick="showSecurityDetail('context')" style="cursor:pointer;">
+              <div class="pyr-dot"></div>
+              <div class="pyr-label">Context</div>
+            </div>
+            <div class="pyramid-item active" onclick="showSecurityDetail('behavior')" style="cursor:pointer;">
+              <div class="pyr-dot"></div>
+              <div class="pyr-label">Behavior</div>
+            </div>
+            <div class="pyramid-item active" onclick="showSecurityDetail('intent')" style="cursor:pointer;">
+              <div class="pyr-dot"></div>
+              <div class="pyr-label">Intent</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions + Insights + Transactions -->
+      <div class="grid-3">
+        <div class="card">
+          <div class="section-title">AI Insights</div>
+          <div id="dash-insights">
+            <div style="padding:10px;text-align:center;color:var(--text-muted);font-size:13px;">Loading AI insights...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Portfolio Breakdown</div>
+          <div id="dash-portfolio">
+            <div style="padding:10px;text-align:center;color:var(--text-muted);font-size:13px;">Loading portfolio...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Recent Transactions</div>
+          <div id="transactions-list">
+            <div style="padding:10px;text-align:center;color:var(--text-muted);font-size:13px;">Loading transactions...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CHAT PAGE ══ -->
+    <div class="page" id="page-chat">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Wealth Coach 🤖</div>
+          <div class="page-sub">Ask anything about your finances — I know your profile</div>
+        </div>
+      </div>
+
+      <div class="chat-layout">
+        <div class="chat-main">
+          <div class="chat-messages" id="chat-messages">
+
+            <!-- Welcome message -->
+            <div class="msg ai">
+              <div class="msg-avatar">W</div>
+              <div>
+                <div class="msg-bubble">
+                  <span id="chat-welcome-msg">Hi! 👋 I'm your SecureWealth Coach. How can I help you grow and protect your wealth today?</span>
+                </div>
+                <div class="why-btn" onclick="toggleWhy(this)">💡 Why am I seeing this?</div>
+                <div class="why-tooltip">Based on your onboarding profile — income, goal, and risk appetite are loaded from your Financial DNA.</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Input -->
+          <div class="chat-input-area">
+            <span style="font-size:18px;">✦</span>
+            <input class="chat-input" id="chat-input" placeholder="Ask anything... 'Should I start an SIP?' or 'I want to invest ₹1 lakh'" onkeydown="if(event.key==='Enter') sendChat()">
+            <button class="send-btn" onclick="sendChat()">▶</button>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="chat-sidebar-panel">
+          <div class="card" style="padding:16px;">
+            <div class="section-title" style="font-size:13px;">Quick Prompts</div>
+            <div class="quick-prompts">
+              <button class="quick-prompt" onclick="setPrompt('Should I start an SIP right now?')">Should I start an SIP?</button>
+              <button class="quick-prompt" onclick="setPrompt('I want to invest 5000')">Invest ₹5,000</button>
+              <button class="quick-prompt" onclick="setPrompt('I want to invest 1 lakh')">Invest ₹1 Lakh 🚨</button>
+              <button class="quick-prompt" onclick="setPrompt('What if I invest for 10 years?')">10-year projection</button>
+              <button class="quick-prompt" onclick="setPrompt('What is my net worth?')">My net worth</button>
+              <button class="quick-prompt" onclick="setPrompt('How do I save tax this year?')">Tax saving tips</button>
+            </div>
+          </div>
+
+          <div class="card" style="padding:16px;">
+            <div class="section-title" style="font-size:13px;">Your Profile</div>
+            <div class="stat-row" style="padding:8px 0;">
+              <div class="stat-row-label" style="font-size:12px;">Income</div>
+              <div class="stat-row-value" style="font-size:13px;" id="chat-profile-income">...</div>
+            </div>
+            <div class="stat-row" style="padding:8px 0;">
+              <div class="stat-row-label" style="font-size:12px;">Risk</div>
+              <div class="stat-row-value" style="font-size:13px;" id="chat-profile-risk">...</div>
+            </div>
+            <div class="stat-row" style="padding:8px 0;">
+              <div class="stat-row-label" style="font-size:12px;">Goal</div>
+              <div class="stat-row-value" style="font-size:13px; max-width:120px; text-align:right;" id="chat-profile-goal">...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SIMULATOR PAGE ══ -->
+    <div class="page" id="page-simulator">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Scenario Simulator 📈</div>
+          <div class="page-sub">See what your investments could grow to</div>
+        </div>
+      </div>
+
+      <div class="grid-2-1">
+        <div>
+          <!-- Controls -->
+          <div class="card" style="margin-bottom:20px;">
+            <div class="section-title">Investment Parameters</div>
+            <div class="simulator-controls">
+              <div class="slider-group">
+                <div class="slider-label">
+                  <span class="slider-name">Monthly Investment</span>
+                  <span class="slider-val" id="sim-amount-val">₹5,000</span>
+                </div>
+                <input type="range" min="1000" max="50000" step="500" value="5000" id="sim-amount" oninput="scheduleSimulatorUpdate()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-label">
+                  <span class="slider-name">Time Period</span>
+                  <span class="slider-val" id="sim-years-val">10 years</span>
+                </div>
+                <input type="range" min="1" max="30" step="1" value="10" id="sim-years" oninput="scheduleSimulatorUpdate()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-label">
+                  <span class="slider-name">Expected Return</span>
+                  <span class="slider-val" id="sim-rate-val">12%</span>
+                </div>
+                <input type="range" min="6" max="20" step="0.5" value="12" id="sim-rate" oninput="scheduleSimulatorUpdate()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Nudge Banner -->
+          <div class="nudge-banner" id="sim-nudge">
+            ⚡ Starting 1 year later costs you <strong id="nudge-cost" style="margin:0 4px;">₹1,87,587</strong> — start today!
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="sim-summary-cards">
+            <div class="sim-card">
+              <div class="sim-card-label">Total Invested</div>
+              <div class="sim-card-val" id="sim-invested" style="color:var(--text-secondary)">₹6,00,000</div>
+            </div>
+            <div class="sim-card">
+              <div class="sim-card-label">Final Value</div>
+              <div class="sim-card-val" id="sim-final" style="color:var(--teal)">₹11,61,695</div>
+            </div>
+            <div class="sim-card">
+              <div class="sim-card-label">Wealth Gain</div>
+              <div class="sim-card-val" id="sim-gain" style="color:var(--gold)">₹5,61,695</div>
+            </div>
+          </div>
+
+          <!-- Chart -->
+          <div class="card">
+            <div class="section-title">Projection Chart</div>
+            <div class="sim-chart-area">
+              <svg id="sim-chart" viewBox="0 0 600 220" style="width:100%;height:100%;">
+                <defs>
+                  <linearGradient id="nowGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#00D4AA" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#00D4AA" stop-opacity="0"/>
+                  </linearGradient>
+                  <linearGradient id="laterGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#4A9EFF" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#4A9EFF" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <!-- Grid lines -->
+                <line x1="0" y1="44" x2="600" y2="44" stroke="#1E2D45" stroke-width="1"/>
+                <line x1="0" y1="110" x2="600" y2="110" stroke="#1E2D45" stroke-width="1"/>
+                <line x1="0" y1="176" x2="600" y2="176" stroke="#1E2D45" stroke-width="1"/>
+                <!-- Now path -->
+                <path id="now-fill" d="M0,210 Q150,180 300,120 Q450,60 600,20 L600,210 Z" fill="url(#nowGrad)"/>
+                <path id="now-line" d="M0,210 Q150,180 300,120 Q450,60 600,20" fill="none" stroke="#00D4AA" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Later path -->
+                <path id="later-fill" d="M0,210 Q150,195 300,150 Q450,105 600,70 L600,210 Z" fill="url(#laterGrad)"/>
+                <path id="later-line" d="M0,210 Q150,195 300,150 Q450,105 600,70" fill="none" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round" stroke-dasharray="6,4"/>
+                <!-- Labels -->
+                <text x="520" y="18" fill="#00D4AA" font-size="10" font-family="DM Sans">Start now</text>
+                <text x="500" y="68" fill="#4A9EFF" font-size="10" font-family="DM Sans">Start 1yr later</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="section-title" style="font-size:13px;">Compounding Power</div>
+            <div style="text-align:center;padding:20px 0;">
+              <div style="font-size:48px;margin-bottom:8px;">⚡</div>
+              <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--teal)" id="multiplier">1.9x</div>
+              <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">your money grows</div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-row-label" style="font-size:12px;">You invest</div>
+              <div class="stat-row-value" id="side-invested" style="font-size:13px;">₹6L</div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-row-label" style="font-size:12px;">Returns earned</div>
+              <div class="stat-row-value" id="side-returns" style="font-size:13px;color:var(--gold);">₹5.6L</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title" style="font-size:13px;">Risk Check</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Run fraud check before investing this amount</div>
+            <button class="btn-primary" style="font-size:13px;padding:10px;" onclick="switchPage('chat', document.querySelectorAll('.nav-item')[1]); setTimeout(()=>{ setPrompt('I want to invest ' + document.getElementById('sim-amount').value); sendChat(); }, 300)">
+              🛡 Execute with Risk Check
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NET WORTH PAGE ══ -->
+    <div class="page" id="page-networth">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Net Worth ◉</div>
+          <div class="page-sub">All your assets and liabilities in one place</div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:24px;">
+        <div class="card" style="background:linear-gradient(135deg,rgba(0,212,170,0.08),rgba(0,168,130,0.04));border-color:rgba(0,212,170,0.2);">
+          <div class="card-label">Total Assets</div>
+          <div class="card-value" style="color:var(--teal)" id="nw-total-assets">...</div>
+          <div class="card-delta" id="nw-assets-cats">Calculating...</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total Liabilities</div>
+          <div class="card-value" style="color:var(--red)" id="nw-total-liabilities">...</div>
+          <div class="card-delta" id="nw-liabilities-note" style="color:var(--teal)">Calculating...</div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,rgba(245,166,35,0.08),rgba(245,166,35,0.04));border-color:rgba(245,166,35,0.2);">
+          <div class="card-label">Net Worth</div>
+          <div class="card-value" style="color:var(--gold)" id="nw-net-worth">...</div>
+          <div class="card-delta" style="color:var(--gold)" id="nw-growth-note">Growing steadily</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Assets Breakdown</div>
+          <div id="nw-breakdown"><div class="stat-row">
+            <div class="stat-row-label">🏦 Savings Account</div>
+            <div class="stat-row-value">₹1,20,000</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">📈 Mutual Funds</div>
+            <div class="stat-row-value">₹60,000</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">🏛 Fixed Deposits</div>
+            <div class="stat-row-value">₹80,000</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">🪙 Gold</div>
+            <div class="stat-row-value">₹60,000</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">🏠 Property</div>
+            <div class="stat-row-value" style="color:var(--text-muted)">Not added</div>
+          </div></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Financial Health Score</div>
+          <div style="text-align:center;padding:24px 0;">
+            <div style="font-size:64px;font-family:var(--font-display);font-weight:800;background:linear-gradient(135deg,var(--teal),var(--blue));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;" id="nw-health-score">78</div>
+            <div style="font-size:16px;color:var(--teal);font-weight:600;margin-top:4px;" id="nw-health-status">Good</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;" id="nw-health-msg">You're on the right track!</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label" style="font-size:12px;">Savings Rate</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:80px;height:4px;background:var(--navy-border);border-radius:4px;overflow:hidden;"><div style="width:70%;height:100%;background:var(--teal);border-radius:4px;"></div></div>
+              <span style="font-size:12px;color:var(--teal);">Good</span>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label" style="font-size:12px;">Emergency Fund</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:80px;height:4px;background:var(--navy-border);border-radius:4px;overflow:hidden;"><div style="width:50%;height:100%;background:var(--amber);border-radius:4px;"></div></div>
+              <span style="font-size:12px;color:var(--amber);">Fair</span>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label" style="font-size:12px;">Investment Mix</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:80px;height:4px;background:var(--navy-border);border-radius:4px;overflow:hidden;"><div style="width:60%;height:100%;background:var(--blue);border-radius:4px;"></div></div>
+              <span style="font-size:12px;color:var(--blue);">Good</span>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label" style="font-size:12px;">Debt Load</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:80px;height:4px;background:var(--navy-border);border-radius:4px;overflow:hidden;"><div style="width:95%;height:100%;background:var(--teal);border-radius:4px;"></div></div>
+              <span style="font-size:12px;color:var(--teal);">Excellent</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RISK ALERTS PAGE ══ -->
+    <div class="page" id="page-alerts">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Risk Alerts ◌</div>
+          <div class="page-sub">All security evaluations and fraud protection decisions</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-sm active">All</button>
+          <button class="btn-sm">Blocked</button>
+          <button class="btn-sm">Warned</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid-3" style="margin-bottom:24px;">
+        <div class="card" style="border-color:rgba(0,212,170,0.2);">
+          <div class="card-label">Total Checks</div>
+          <div class="card-value" id="alert-total">0</div>
+          <div class="card-delta">checks in last 5 mins</div>
+        </div>
+        <div class="card" style="border-color:rgba(255,182,39,0.2);">
+          <div class="card-label">Warnings Issued</div>
+          <div class="card-value" style="color:var(--amber)" id="alert-warns">0</div>
+          <div class="card-delta" style="color:var(--amber);">unusual activity detected</div>
+        </div>
+        <div class="card" style="border-color:rgba(255,71,87,0.2);">
+          <div class="card-label">Actions Blocked</div>
+          <div class="card-value" style="color:var(--red)" id="alert-blocks">0</div>
+          <div class="card-delta" style="color:var(--red)" id="alert-protected">Protected ₹0</div>
+        </div>
+      </div>
+
+      <!-- Alert Log -->
+      <div id="risk-banner"></div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div class="section-title" style="margin-bottom:0;">Audit Log</div>
+            <div id="risk-last-check" style="font-size:11px; color:var(--text-muted);"></div>
+        </div>
+        <div id="audit-log-container"><div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Loading audit log...</div></div>
+      </div>
+    </div>
+
+    <!-- ══ PROFILE PAGE ══ -->
+    <div class="page" id="page-profile">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Profile ○</div>
+          <div class="page-sub">Your financial identity and preferences</div>
+        </div>
+      </div>
+
+      <div class="profile-header-card">
+        <div class="profile-avatar" id="prof-avatar">P</div>
+        <div>
+          <div class="profile-name" id="prof-name">...</div>
+          <div class="profile-role" id="prof-role">Loading...</div>
+          <div class="profile-badges">
+            <span class="tag tag-green" id="prof-badge-kyc">✓ KYC Verified (Demo)</span>
+            <span class="tag tag-blue" id="prof-badge-risk">Medium Risk</span>
+            <span class="tag tag-amber" id="prof-badge-exp">Beginner Investor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Financial Profile</div>
+          <div class="stat-row">
+            <div class="stat-row-label">Age</div>
+            <div class="stat-row-value" id="prof-age">...</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">Monthly Income</div>
+            <div class="stat-row-value" id="prof-income">...</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">Monthly Expenses</div>
+            <div class="stat-row-value" id="prof-expenses">...</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">Primary Goal</div>
+            <div class="stat-row-value" id="prof-goal">...</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">Goal Timeline</div>
+            <div class="stat-row-value" id="prof-timeline">...</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-row-label">Risk Appetite</div>
+            <div class="stat-row-value" id="prof-risk">...</div>
+          </div>
+          <button class="btn-sm" style="width:100%;margin-top:16px;">Edit Profile</button>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Privacy & Consent</div>
+          <div class="consent-item">
+            <div>
+              <div class="consent-label">Financial Data Analysis</div>
+              <div class="consent-desc">Allow AI to analyze spending patterns for insights</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('off')"></div>
+          </div>
+          <div class="consent-item">
+            <div>
+              <div class="consent-label">Behavioral Monitoring</div>
+              <div class="consent-desc">Enable fraud detection based on behavior patterns</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('off')"></div>
+          </div>
+          <div class="consent-item">
+            <div>
+              <div class="consent-label">Personalized Recommendations</div>
+              <div class="consent-desc">Receive AI-powered investment suggestions</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('off')"></div>
+          </div>
+          <div class="consent-item">
+            <div>
+              <div class="consent-label">Account Aggregator</div>
+              <div class="consent-desc">Connect external bank accounts for full picture</div>
+            </div>
+            <div class="toggle off" onclick="this.classList.toggle('off')"></div>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:var(--navy);border-radius:var(--radius-sm);font-size:12px;color:var(--text-muted);">
+            🔒 Your data is encrypted and used only for protection. Never sold to third parties.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:0;">
+        <div class="section-title">Device & Session Security</div>
+        <div class="grid-3">
+          <div style="padding:16px;background:var(--navy);border-radius:var(--radius-sm);">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Current Device</div>
+            <div style="font-size:14px;font-weight:500;" id="prof-device">💻 This Device</div>
+            <div style="margin-top:6px;"><span class="tag tag-green">✓ Trusted</span></div>
+          </div>
+          <div style="padding:16px;background:var(--navy);border-radius:var(--radius-sm);">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Last Login</div>
+            <div style="font-size:14px;font-weight:500;" id="prof-login-time">Just now</div>
+            <div style="margin-top:6px;"><span class="tag tag-amber">⚠ Unusual hour</span></div>
+          </div>
+          <div style="padding:16px;background:var(--navy);border-radius:var(--radius-sm);">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Session Risk</div>
+            <div style="font-size:14px;font-weight:500;" id="prof-session-risk">🛡 LOW</div>
+            <div style="margin-top:6px;" id="prof-session-tag"><span class="tag tag-green">All clear</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ TRANSFER PAGE ══ -->
+    <div class="page" id="page-transfer">
+      <!-- AI Scanning Overlay (hidden by default) -->
+      <div class="ai-overlay" id="ai-scan-overlay" style="display:none;">
+        <div class="ai-overlay-box">
+          <span class="ai-brain-icon">🧠</span>
+          <div class="ai-overlay-title">AI Fraud Shield Scanning</div>
+          <div class="ai-scanning-text" id="scan-text">Initializing secure scan...</div>
+          <div class="ai-progress-track">
+            <div class="ai-progress-fill" id="scan-progress"></div>
+          </div>
+          <div class="ai-progress-pct" id="scan-pct">0%</div>
+          <div style="font-size:12px;color:var(--text-muted);">Powered by 7 AI Agents working in parallel</div>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Send Money ↑</div>
+          <div class="page-sub">Secured by AI Fraud Shield — every transfer scanned before execution</div>
+        </div>
+      </div>
+
+      <!-- Payment Journey Stepper -->
+      <div class="payment-stepper" id="pay-stepper">
+        <div class="ps-step active" id="pstep-1">
+          <div class="ps-circle">1</div>
+          <div class="ps-label">Details</div>
+        </div>
+        <div class="ps-line" id="psline-1"></div>
+        <div class="ps-step" id="pstep-2">
+          <div class="ps-circle">🧠</div>
+          <div class="ps-label">AI Scan</div>
+        </div>
+        <div class="ps-line" id="psline-2"></div>
+        <div class="ps-step" id="pstep-3">
+          <div class="ps-circle">3</div>
+          <div class="ps-label">Decision</div>
+        </div>
+        <div class="ps-line" id="psline-3"></div>
+        <div class="ps-step" id="pstep-4">
+          <div class="ps-circle">4</div>
+          <div class="ps-label">Complete</div>
+        </div>
+      </div>
+
+      <div class="transfer-layout">
+        <!-- LEFT: Form -->
+        <div>
+          <!-- Step 1: Form -->
+          <div id="transfer-step-form">
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-title">Recipient Details</div>
+              <div class="recipient-card">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#2563eb);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;font-family:var(--font-display);" id="rec-avatar">R</div>
+                  <div style="flex:1;">
+                    <div style="font-size:15px;font-weight:600;color:var(--text-primary);" id="rec-name-display">—</div>
+                    <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);" id="rec-acc-display">NOVA ···· ···· ····</div>
+                  </div>
+                  <span class="tag tag-green" style="font-size:10px;">✓ Verified</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Recipient Name</label>
+                <input class="form-input" id="tx-recipient" placeholder="Arjun Mehta" oninput="updateRecipientPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Account / UPI ID</label>
+                <input class="form-input" id="tx-account" placeholder="arjun@upi or 9876543210@okaxis" oninput="updateRecipientPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bank / Network</label>
+                <select class="form-input" id="tx-bank">
+                  <option value="HDFC">HDFC Bank</option>
+                  <option value="SBI">State Bank of India</option>
+                  <option value="ICICI">ICICI Bank</option>
+                  <option value="Axis">Axis Bank</option>
+                  <option value="Kotak">Kotak Mahindra</option>
+                  <option value="Paytm">Paytm Payments Bank</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-title">Amount</div>
+              <div class="amount-display">
+                <div class="amount-label">You Send</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                  <span style="font-size:32px;color:var(--text-secondary);font-family:var(--font-display);">₹</span>
+                  <input id="tx-amount" type="number" min="1" max="500000"
+                    style="background:transparent;border:none;outline:none;font-family:var(--font-display);font-size:48px;font-weight:800;color:var(--text-primary);width:200px;text-align:center;letter-spacing:-0.02em;"
+                    placeholder="0" oninput="updateAmountPreview()">
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px;">
+                  <div style="flex:1;height:1px;background:var(--navy-border);"></div>
+                  <span style="font-size:11px;color:var(--text-muted);">They receive</span>
+                  <div style="flex:1;height:1px;background:var(--navy-border);"></div>
+                </div>
+                <div style="font-size:28px;font-weight:700;color:var(--teal);font-family:var(--font-display);margin-top:8px;" id="tx-receive-amt">₹0</div>
+                <div style="font-size:11px;color:var(--text-muted);">No transfer fees</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+                <button class="btn-sm" onclick="setTxAmount(500)">₹500</button>
+                <button class="btn-sm" onclick="setTxAmount(2000)">₹2,000</button>
+                <button class="btn-sm" onclick="setTxAmount(5000)">₹5,000</button>
+                <button class="btn-sm" onclick="setTxAmount(10000)">₹10,000</button>
+                <button class="btn-sm" onclick="setTxAmount(50000)">₹50,000</button>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Remark (Optional)</label>
+                <input class="form-input" id="tx-remark" placeholder="Rent, loan repayment, gift...">
+              </div>
+            </div>
+
+            <button class="send-btn-gold" id="tx-send-btn" onclick="initiateTransfer()">
+              🛡 Scan & Send →
+            </button>
+          </div>
+
+          <!-- Step 3: Decision Card (hidden initially) -->
+          <div id="transfer-step-decision" style="display:none;">
+            <div class="decision-card" id="tx-decision-card">
+              <div id="tx-decision-badge"></div>
+
+              <!-- Risk Gauge -->
+              <div class="risk-gauge-wrap">
+                <svg width="160" height="90" viewBox="0 0 160 90">
+                  <path d="M 15 85 A 65 65 0 0 1 145 85" fill="none" stroke="#1E2D45" stroke-width="12" stroke-linecap="round"/>
+                  <path id="gauge-arc" d="M 15 85 A 65 65 0 0 1 145 85" fill="none" stroke="#00D4AA" stroke-width="12" stroke-linecap="round"
+                    stroke-dasharray="204" stroke-dashoffset="204" style="transition:stroke-dashoffset 1s ease,stroke 1s ease;"/>
+                  <text x="80" y="72" text-anchor="middle" font-family="Syne" font-size="28" font-weight="800" fill="white" id="gauge-text">0</text>
+                  <text x="80" y="86" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#8892A4">RISK SCORE</text>
+                  <text x="15" y="100" text-anchor="middle" font-family="DM Mono" font-size="9" fill="#4A5568">0</text>
+                  <text x="145" y="100" text-anchor="middle" font-family="DM Mono" font-size="9" fill="#4A5568">100</text>
+                </svg>
+              </div>
+
+              <!-- AI Quote -->
+              <div class="ai-quote-box" id="tx-ai-reason"></div>
+
+              <!-- Trust Pyramid -->
+              <div style="margin-bottom:8px;">
+                <div class="section-title" style="font-size:12px;">Trust Pyramid Analysis</div>
+                <div class="trust-pyramid" id="tx-trust-pyramid"></div>
+              </div>
+
+              <!-- Risk Signals -->
+              <div id="tx-signals-list" style="display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;"></div>
+
+              <!-- Actions -->
+              <div id="tx-decision-actions"></div>
+            </div>
+          </div>
+
+          <!-- Step 4: Success (hidden initially) -->
+          <div id="transfer-step-success" style="display:none;">
+            <div class="card">
+              <div class="success-screen">
+                <span class="success-icon">✅</span>
+                <div style="font-family:var(--font-display);font-size:26px;font-weight:800;margin-bottom:8px;">Payment Sent!</div>
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;" id="tx-success-msg"></div>
+                <div style="background:var(--navy);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left;">
+                  <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--navy-border);font-size:13px;">
+                    <span style="color:var(--text-muted);">To</span><span id="tx-succ-to" style="font-weight:600;">—</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--navy-border);font-size:13px;">
+                    <span style="color:var(--text-muted);">Amount</span><span id="tx-succ-amt" style="font-weight:600;color:var(--teal);">—</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;">
+                    <span style="color:var(--text-muted);">AI Risk Score</span><span id="tx-succ-score" style="font-weight:600;color:var(--teal);">—</span>
+                  </div>
+                </div>
+                <button class="send-btn-gold" onclick="resetTransfer()">↑ Make Another Transfer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Bank Card + PIN + Info -->
+        <div>
+          <!-- Bank Card -->
+          <div class="bank-card">
+            <div class="bank-card-logo">
+              <div class="bank-card-brand">NOVA Bank</div>
+              <div class="ai-protected-badge"><div class="ai-protected-dot"></div>AI Protected</div>
+            </div>
+            <div class="bank-card-number" id="bc-number">NOVA ···· ···· 4821</div>
+            <div class="bank-card-footer">
+              <div>
+                <div class="bank-card-label">Account Holder</div>
+                <div class="bank-card-value" id="bc-name">—</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="bank-card-label">Available Balance</div>
+                <div class="bank-card-balance" id="bc-balance">₹—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIN Entry -->
+          <div class="card" id="pin-card" style="margin-bottom:16px;display:none;">
+            <div class="section-title">Transaction PIN</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Enter your 4-digit secure PIN to authorize</div>
+            <div class="pin-inputs">
+              <input type="password" maxlength="1" class="pin-dot" id="pin1" oninput="pinNav(this,'','pin2')">
+              <input type="password" maxlength="1" class="pin-dot" id="pin2" oninput="pinNav(this,'pin1','pin3')">
+              <input type="password" maxlength="1" class="pin-dot" id="pin3" oninput="pinNav(this,'pin2','pin4')">
+              <input type="password" maxlength="1" class="pin-dot" id="pin4" oninput="pinNav(this,'pin3','')">
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);text-align:center;">Demo PIN: 1234</div>
+          </div>
+
+          <!-- Transfer Summary -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="section-title" style="font-size:12px;">Transfer Summary</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Your AI shield will scan:</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);">
+                <span style="color:var(--teal);">✓</span> Device fingerprint & trust level
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);">
+                <span style="color:var(--teal);">✓</span> Behavioral pattern match
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);">
+                <span style="color:var(--teal);">✓</span> Spending history comparison
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);">
+                <span style="color:var(--teal);">✓</span> Transaction timing analysis
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);">
+                <span style="color:var(--teal);">✓</span> Intent & risk score generation
+              </div>
+            </div>
+            <div class="ai-insight-bubble" style="margin-top:14px;font-size:12px;">
+              🛡 <strong>AI Fraud Shield</strong> uses 5 behavioral signals to protect every transfer in real time.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content -->
+
+  <!-- Floating Risk Meter Widget -->
+  <div class="risk-meter-widget" id="risk-meter-widget" onclick="switchPage('alerts', document.querySelector('.nav-item'))">
+    <span style="font-size:16px;">🛡</span>
+    <div>
+      <div class="risk-meter-text" id="rmt-label">LOW RISK</div>
+      <div class="risk-meter-bar"><div class="risk-meter-fill" id="rmt-fill" style="width:15%;background:var(--teal);"></div></div>
+    </div>
+  </div>
+
+</div><!-- end #app -->
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+  // Firebase Config (Placeholder - Replace with your actual config)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDummyKey_ReplaceMe",
+    authDomain: "securewealth-ai.firebaseapp.com",
+    projectId: "securewealth-ai",
+    storageBucket: "securewealth-ai.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef123456"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  console.log("Cloud sync active: Firebase initialized");
+
+  // Helper functions exposed to global scope
+  window.saveToCloud = async function(userId, data) {
+    try {
+      await setDoc(doc(db, "users", userId), data);
+      console.log("Cloud sync active: Saved to cloud");
+    } catch (e) {
+      console.warn("Cloud save failed, fallback to local only", e);
+    }
+  };
+
+  window.loadFromCloud = async function(userId) {
+    try {
+      const docSnap = await getDoc(doc(db, "users", userId));
+      if (docSnap.exists()) {
+        console.log("Cloud sync active: Loaded from cloud");
+        return docSnap.data();
+      }
+    } catch (e) {
+      console.warn("Cloud load failed, using local fallback", e);
+    }
+    return null;
+  };
+
+  // Trigger app initialization after Firebase is ready
+  if (typeof initApp === 'function') {
+    initApp();
+  }
+</script>
+
+<script>
+// ── USER DATA (mutable, persisted in localStorage) ──
+const USER_DEFAULTS = {
+  name: "Priya",
+  age: 28,
+  income: 55000,
+  monthly_expenses: 35000,
+  goal: "buy a house in 7 years",
+  risk_appetite: "medium",
+  current_savings: 120000,
+  investments_value: 60000,
+  investment_experience: "beginner",
+  avg_investment: 5000,
+  timeline: 7,
+  assets: {
+    gold: 150000,
+    property: 2500000,
+    vehicles: 300000
+  },
+  transactions: [
+    { type: "debit", label: "Swiggy", amount: 450 },
+    { type: "debit", label: "Amazon", amount: 1200 },
+    { type: "credit", label: "Salary", amount: 55000 },
+    { type: "debit", label: "Rent", amount: 15000 },
+    { type: "debit", label: "Groceries", amount: 3200 }
+  ]
+};
+
+let USER = JSON.parse(localStorage.getItem('swt_user') || 'null') || { ...USER_DEFAULTS };
+
+// Migration/Data Integrity for Demo
+if (!USER.assets) {
+  USER.assets = { ...USER_DEFAULTS.assets };
+  saveUser();
+}
+if (!USER.transactions) {
+  USER.transactions = [...USER_DEFAULTS.transactions];
+  saveUser();
+}
+
+function saveUser() {
+  localStorage.setItem('swt_user', JSON.stringify(USER));
+  
+  // ADD THIS: Save to Cloud
+  if (window.saveToCloud) {
+    window.saveToCloud("demoUser", USER);
+  }
+}
+
+const API = "http://localhost:8000";
+
+// ── WIZARD STATE ──
+let wizardStep = 1;
+let selectedRisk = USER.risk_appetite || 'medium';
+
+// ── WIZARD NAVIGATION ──
+function nextWizardStep() {
+  document.getElementById('wizard-step-' + wizardStep).style.display = 'none';
+  document.getElementById('step-dot-' + wizardStep).classList.remove('active');
+  document.getElementById('step-dot-' + wizardStep).classList.add('done');
+  wizardStep++;
+  document.getElementById('wizard-step-' + wizardStep).style.display = 'block';
+  document.getElementById('step-dot-' + wizardStep).classList.add('active');
+}
+
+function prevWizardStep() {
+  document.getElementById('wizard-step-' + wizardStep).style.display = 'none';
+  document.getElementById('step-dot-' + wizardStep).classList.remove('active');
+  wizardStep--;
+  document.getElementById('wizard-step-' + wizardStep).style.display = 'block';
+  document.getElementById('step-dot-' + wizardStep).classList.remove('done');
+  document.getElementById('step-dot-' + wizardStep).classList.add('active');
+}
+
+// ── RISK SELECTOR ──
+function selectRisk(level) {
+  selectedRisk = level;
+  ['low', 'medium', 'high'].forEach(l =>
+    document.getElementById('risk-' + l).classList.toggle('active', l === level)
+  );
+}
+
+// ── DEMO FILL ──
+function fillDemo() {
+  document.getElementById('f-name').value     = 'Priya Sharma';
+  document.getElementById('f-age').value      = '28';
+  document.getElementById('f-exp').value      = 'beginner';
+  // auto-advance to step 2
+  if (wizardStep === 1) nextWizardStep();
+  document.getElementById('f-income').value      = '55000';
+  document.getElementById('f-expenses').value    = '35000';
+  document.getElementById('f-savings').value     = '120000';
+  document.getElementById('f-investments').value = '60000';
+  if (wizardStep === 2) nextWizardStep();
+  document.getElementById('f-goal').value     = 'Buy a house';
+  document.getElementById('f-timeline').value = '7';
+  selectRisk('medium');
+}
+
+// ── SUBMIT PROFILE (called from onboarding wizard Step 3) ──
+async function submitProfile() {
+  const name     = document.getElementById('f-name').value.trim()     || USER_DEFAULTS.name;
+  const age      = parseInt(document.getElementById('f-age').value)    || USER_DEFAULTS.age;
+  const exp      = document.getElementById('f-exp').value              || USER_DEFAULTS.investment_experience;
+  const income   = parseFloat(document.getElementById('f-income').value)   || USER_DEFAULTS.income;
+  const expenses = parseFloat(document.getElementById('f-expenses').value) || USER_DEFAULTS.monthly_expenses;
+  const savings  = parseFloat(document.getElementById('f-savings').value)  || USER_DEFAULTS.current_savings;
+  const invValue = parseFloat(document.getElementById('f-investments').value) || USER_DEFAULTS.investments_value;
+  const goal     = document.getElementById('f-goal').value             || USER_DEFAULTS.goal;
+  const timeline = parseInt(document.getElementById('f-timeline').value)   || USER_DEFAULTS.timeline;
+
+  // Update global USER in-place so all existing references stay live
+  Object.assign(USER, {
+    name,
+    age,
+    investment_experience: exp,
+    income,
+    monthly_expenses: expenses,
+    current_savings: savings,
+    investments_value: invValue,
+    goal: `${goal} in ${timeline} years`,
+    risk_appetite: selectedRisk,
+    avg_investment: Math.round((income - expenses) * 0.1),
+    timeline
+  });
+
+  saveUser();
+
+  // Show loading animation
+  document.getElementById('wizard-step-3').style.display = 'none';
+  document.getElementById('wizard-loading').style.display = 'block';
+
+  // Brief pause for UX, then enter app
+  await new Promise(r => setTimeout(r, 1400));
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  populateAppFromUser();
+}
+
+// ── POPULATE APP UI FROM USER ──
+// ── HELPERS ──
+function createWhyTooltip(text) {
+  if (!text) text = "No explanation available";
+  const safeText = text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+  return `<span class="why-btn" onclick="showWhy(event, '${safeText}')">💡 Why?</span>`;
+}
+
+function showWhy(e, text) {
+  const tooltip = document.getElementById('why-tooltip');
+  tooltip.innerText = text;
+  tooltip.style.display = 'block';
+
+  const rect = e.target.getBoundingClientRect();
+  tooltip.style.top = (rect.bottom + 8) + 'px';
+  tooltip.style.left = rect.left + 'px';
+  
+  // Stop propagation so the global listener doesn't hide it immediately
+  e.stopPropagation();
+}
+
+document.addEventListener('click', function(e) {
+  const tooltip = document.getElementById('why-tooltip');
+  if (tooltip && !e.target.classList.contains('why-btn')) {
+    tooltip.style.display = 'none';
+  }
+});
+
+function populateAppFromUser() {
+  const initials = (USER.name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  // Sidebar
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent   = USER.name;
+  document.getElementById('sidebar-role').textContent   = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1) + ' Investor';
+
+  // Dashboard
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dash-greeting').textContent = `${greeting}, ${USER.name.split(' ')[0]} 👋`;
+
+  // Chat sidebar profile
+  document.getElementById('chat-profile-income').textContent = '₹' + USER.income.toLocaleString('en-IN');
+  document.getElementById('chat-profile-risk').textContent   = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1);
+  document.getElementById('chat-profile-goal').textContent   = USER.goal;
+
+  // Profile page
+  document.getElementById('prof-avatar').textContent  = initials;
+  document.getElementById('prof-name').textContent    = USER.name;
+  document.getElementById('prof-role').textContent    = USER.investment_experience.charAt(0).toUpperCase() + USER.investment_experience.slice(1) + ' Investor';
+  document.getElementById('prof-age').textContent     = USER.age + ' years';
+  document.getElementById('prof-income').textContent  = '₹' + USER.income.toLocaleString('en-IN');
+  document.getElementById('prof-expenses').textContent = '₹' + USER.monthly_expenses.toLocaleString('en-IN');
+  document.getElementById('prof-goal').textContent    = USER.goal;
+  document.getElementById('prof-timeline').textContent = USER.timeline + ' years';
+  document.getElementById('prof-risk').textContent    = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1);
+  document.getElementById('prof-badge-risk').textContent = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1) + ' Risk';
+  document.getElementById('prof-badge-exp').textContent  = USER.investment_experience.charAt(0).toUpperCase() + USER.investment_experience.slice(1) + ' Investor';
+
+  // Personalise welcome message
+  document.getElementById('chat-welcome-msg').textContent =
+    `Hi ${USER.name.split(' ')[0]}! 👋 I'm your SecureWealth Coach. I know your goal is to ${USER.goal} — let's make it happen. What would you like to explore today?`;
+
+  const houseSaved = (USER.current_savings || 0) * 0.5;
+  const emergencySaved = (USER.current_savings || 0) * 0.3;
+  const vacationSaved = (USER.current_savings || 0) * 0.2;
+
+  const goals = [
+    {
+      name: "🏠 Buy a House",
+      target: USER.income * 60,
+      current: houseSaved
+    },
+    {
+      name: "📚 Emergency Fund",
+      target: USER.income * 6,
+      current: emergencySaved
+    },
+    {
+      name: "✈️ Vacation Fund",
+      target: USER.income * 2,
+      current: vacationSaved
+    }
+  ];
+
+  const goalsHTML = goals.map(g => {
+    const percent = Math.min((g.current / g.target) * 100, 100).toFixed(0);
+
+    return `
+      <div class="goal-item">
+        <div class="goal-header">
+          <div class="goal-name">${g.name}</div>
+          <div class="goal-pct">${percent}%</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
+        <div class="goal-meta">
+          <span>₹${g.current.toLocaleString('en-IN')} saved</span>
+          <span>₹${g.target.toLocaleString('en-IN')} target</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("dash-goals").innerHTML = goalsHTML;
+
+  const insights = [];
+  const savings = USER.income - USER.monthly_expenses;
+  const savingsRatePct = USER.income > 0 ? (savings / USER.income) : 0;
+  const rateDisplay = (savingsRatePct * 100).toFixed(0);
+
+  if (savingsRatePct < 0.20) {
+    insights.push({
+      text: "⚠️ Your savings rate is low. Try increasing it to 20%.",
+      why: `Based on your ₹${USER.income.toLocaleString('en-IN')} income and ${rateDisplay}% savings rate, you have ₹${savings.toLocaleString('en-IN')} left monthly. Aiming for 20% builds a safer buffer.`
+    });
+  } else if (savingsRatePct > 0.50) {
+    insights.push({
+      text: "🚀 Great savings discipline! Consider investing more for growth.",
+      why: `You're saving ${rateDisplay}% of your income. Compounding this surplus in equities could accelerate your ${USER.goal} goal.`
+    });
+  }
+
+  if (USER.risk_appetite === "low") {
+    insights.push({
+      text: "🛡️ You prefer safety. Consider balanced mutual funds.",
+      why: "As a 'Low Risk' investor, balanced funds protect your principal while providing inflation-beating growth."
+    });
+  } else if (USER.risk_appetite === "high") {
+    insights.push({
+      text: "📈 You can explore equities or high-growth investments.",
+      why: "Your 'High Risk' appetite allows you to ride market volatility for significantly higher long-term wealth."
+    });
+  }
+
+  if (USER.income > 100000) {
+    insights.push({
+      text: "💰 You are in a strong earning bracket. Optimize tax-saving investments.",
+      why: `With an income over ₹1L/month, maximizing Section 80C and 80D can save you over ₹45,000 in annual taxes.`
+    });
+  }
+  
+  if (insights.length === 0) {
+    insights.push({
+      text: "💡 You are on a steady path. Keep it up!",
+      why: "Your financial indicators are balanced. Consistency is key to long-term wealth."
+    });
+  }
+
+  document.getElementById("dash-insights").innerHTML =
+    insights.map(i => `
+      <div style="margin-bottom:16px; border-bottom:1px solid var(--navy-border); padding-bottom:16px;">
+        <div style="font-size:13px; color:var(--text-primary); font-weight:500;">
+          ${i.text} ${createWhyTooltip(i.why)}
+        </div>
+        ${buildReasoningPanel()}
+      </div>
+    `).join("");
+
+  updateChart();
+  loadNetworth();
+  loadDashboard();
+  loadRiskAlerts();
+  renderTransactions();
+}
+
+// ── WEALTH CHART (DYNAMIC) ──
+function updateChart() {
+  const data = [];
+  let value = USER.current_savings || 0;
+  
+  for (let i = 0; i < 12; i++) {
+    value += ((USER.income || 0) * 0.2); // assume 20% savings
+    value *= 1.008; // ~10% annual return -> 0.8% monthly
+    data.push(value);
+  }
+  
+  const minVal = Math.min(...data);
+  const maxVal = Math.max(...data);
+  
+  const w = 400;
+  const h = 160;
+  const topPad = 15;
+  const botPad = 140;
+  const range = (maxVal - minVal) || 1;
+  const ySpan = botPad - topPad;
+  
+  const xStep = w / (data.length - 1);
+  
+  const points = data.map((val, i) => {
+    const x = i * xStep;
+    const y = botPad - ((val - minVal) / range) * ySpan;
+    return {x, y};
+  });
+  
+  // Build smooth quadratic path
+  let pathD = `M${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    // Control point half-way
+    const midX = (points[i-1].x + points[i].x) / 2;
+    pathD += ` Q${midX},${points[i-1].y} ${points[i].x},${points[i].y}`;
+  }
+  
+  const lineEl = document.getElementById("dash-chart-line");
+  const areaEl = document.getElementById("dash-chart-area");
+  const dotEl = document.getElementById("dash-chart-dot");
+  
+  if (lineEl && areaEl && dotEl) {
+    lineEl.setAttribute("d", pathD);
+    areaEl.setAttribute("d", `${pathD} L${w},${h} L0,${h} Z`);
+    
+    const lastP = points[points.length - 1];
+    dotEl.setAttribute("cx", lastP.x);
+    dotEl.setAttribute("cy", lastP.y);
+
+    // Bonus: Animate drawing the line
+    try {
+        const length = lineEl.getTotalLength();
+        lineEl.style.strokeDasharray = length;
+        lineEl.style.strokeDashoffset = length;
+        lineEl.style.transition = "none";
+        
+        // Trigger reflow to reset animation
+        void lineEl.getBoundingClientRect();
+        
+        lineEl.style.transition = "stroke-dashoffset 1s ease-in-out";
+        lineEl.style.strokeDashoffset = "0";
+    } catch(e) {}
+  }
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  try {
+    const [networthRes, profileRes] = await Promise.all([
+      fetch(`${API}/api/ai/networth`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          savings: USER.current_savings || 0,
+          investments: USER.investments_value || 0,
+          property_value: USER.assets?.property || 0,
+          gold_value: USER.assets?.gold || 0,
+          vehicle_value: USER.assets?.vehicles || 0
+        })
+      }),
+      fetch(`${API}/api/ai/profile/analyze`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(USER)
+      })
+    ]);
+
+    const networthData = await networthRes.json();
+    const profileData = await profileRes.json();
+
+    const nw = networthData.summary;
+    const profile = profileData;
+
+    if (nw) {
+      document.getElementById('dash-networth').innerText = `₹${nw.net_worth.toLocaleString('en-IN')}`;
+      document.getElementById('dash-income').innerText = `₹${USER.income.toLocaleString('en-IN')}`;
+      document.getElementById('dash-savings').innerText = `₹${nw.total_assets.toLocaleString('en-IN')}`;
+
+      const savingsRate = ((nw.total_assets / (USER.income * 12)) * 100).toFixed(1);
+      document.getElementById('dash-savings-rate').innerText = savingsRate + "%";
+      
+      const total = nw.total_assets || 0;
+      const getPct = (val) => total > 0 ? Math.round((val / total) * 100) : 0;
+      
+      const assetsList = [
+        { label: "💰 Savings", val: USER.current_savings || 0 },
+        { label: "📈 Mutual Funds", val: USER.investments_value || 0 },
+        { label: "🪙 Gold", val: USER.assets?.gold || 0 },
+        { label: "🏠 Property", val: USER.assets?.property || 0 },
+        { label: "🚗 Vehicles", val: USER.assets?.vehicles || 0 }
+      ];
+
+      let portfolioHTML = assetsList.map(a => {
+        if (a.val <= 0) return '';
+        return `
+          <div class="stat-row" style="padding: 10px 0;">
+            <div class="stat-row-label">${a.label}</div>
+            <div class="stat-row-value">₹${a.val.toLocaleString('en-IN')} <span style="font-size:11px; color:var(--text-secondary); margin-left:4px;">(${getPct(a.val)}%)</span></div>
+          </div>
+        `;
+      }).join('');
+
+      // Smart Insight
+      let portfolioInsight = "Your portfolio is looking balanced. Keep maintaining this mix for steady growth.";
+      const savingsPct = getPct(USER.current_savings);
+      const propertyPct = getPct(USER.assets?.property);
+      
+      if (savingsPct > 50) {
+        portfolioInsight = "You currently keep a large portion in cash. Moving a small part into mutual funds could significantly improve your long-term returns.";
+      } else if (propertyPct > 70) {
+        portfolioInsight = "A large part of your wealth is tied up in property. Diversifying into more liquid assets like gold or funds could improve your flexibility.";
+      }
+
+      portfolioHTML += `
+        <div style="margin-top:14px; padding:12px; background:rgba(0,212,170,0.05); border-radius:12px; border:1px solid rgba(0,212,170,0.1);">
+          <div style="font-size:13px; color:var(--text-primary); line-height:1.4;">💡 ${portfolioInsight}</div>
+        </div>
+      `;
+      
+      document.getElementById("dash-portfolio").innerHTML = portfolioHTML;
+    }
+
+    if (profile && profile.archetype) {
+      const whyExplanation = `This persona is based on your current ₹${USER.income.toLocaleString('en-IN')} income, your ${profile.savings_rate}% savings discipline, and your stated "${USER.risk_appetite}" risk preference.`;
+      
+      document.getElementById('dash-archetype').innerHTML = `${profile.archetype} ${createWhyTooltip(whyExplanation)}`;
+      
+      let humanDesc = "";
+      const arc = profile.archetype.toLowerCase();
+      if (arc.includes("disciplined")) {
+        humanDesc = "You consistently save and invest wisely, showing strong financial habits that build long-term wealth.";
+      } else if (arc.includes("conservative") || arc.includes("saver")) {
+        humanDesc = "You prioritize safety and stability, preferring reliable growth over high-risk market swings.";
+      } else if (arc.includes("aggressive") || arc.includes("growth")) {
+        humanDesc = "You have a high appetite for growth and are willing to navigate market volatility for significant returns.";
+      } else {
+        humanDesc = "You are currently focusing on building your foundational habits for a secure and growing financial future.";
+      }
+      
+      document.getElementById('dash-desc').textContent = humanDesc;
+      document.getElementById('dash-tags').innerHTML = `
+        <span class="signal-tag" style="background:var(--teal-light);color:var(--teal);border-color:var(--teal)">💪 ${profile.strength}</span>
+        <span class="signal-tag" style="background:var(--amber-light);color:var(--amber);border-color:var(--amber)">⚠️ ${profile.weakness}</span>
+      `;
+      document.getElementById('dash-savings-rate').textContent = `${profile.savings_rate}% savings rate`;
+      
+      if (profile.behavior_score !== undefined) {
+        const score = profile.behavior_score;
+        const color = score >= 70 ? 'var(--teal)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
+        document.getElementById('dash-behavior-score').innerText = `${score} (${profile.behavior_label})`;
+        document.getElementById('dash-behavior-score').style.color = color;
+        document.getElementById('dash-behavior-explanation').innerText = profile.score_explanation || "Consistency is key.";
+      }
+    }
+    
+    renderTransactions();
+  } catch (error) {
+    console.error("Failed to load dashboard data:", error);
+    document.getElementById('dash-archetype').textContent = "Profile Unavailable";
+    document.getElementById('dash-desc').textContent = "Unable to connect to SecureWealth AI.";
+  }
+}
+
+// ── NET WORTH ──
+async function loadNetworth() {
+  document.getElementById("nw-total-assets").innerText = "Loading...";
+  document.getElementById("nw-total-liabilities").innerText = "Loading...";
+  document.getElementById("nw-net-worth").innerText = "Loading...";
+  document.getElementById("nw-breakdown").innerHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);'>Loading...</div>";
+  document.getElementById("nw-assets-cats").innerText = "Calculating...";
+  document.getElementById("nw-liabilities-note").innerText = "Calculating...";
+
+  try {
+    const startTime = Date.now();
+    const res = await fetch(`${API}/api/ai/networth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_profile: USER,
+        savings: USER.current_savings || 0,
+        investments: USER.investments_value || 0,
+        property_value: USER.assets?.property || 0,
+        gold_value: USER.assets?.gold || 0,
+        vehicle_value: USER.assets?.vehicles || 0
+      })
+    });
+    
+    const data = await res.json();
+    const elapsed = Date.now() - startTime;
+    const MIN_DELAY = 300;
+    
+    if (elapsed < MIN_DELAY) {
+      await new Promise(res => setTimeout(res, MIN_DELAY - elapsed));
+    }
+    
+    if (data.summary) {
+      document.getElementById("nw-total-assets").innerText = `₹${data.summary.total_assets.toLocaleString('en-IN')}`;
+      document.getElementById("nw-total-liabilities").innerText = `₹${data.summary.total_liabilities.toLocaleString('en-IN')}`;
+      document.getElementById("nw-net-worth").innerText = `₹${data.summary.net_worth.toLocaleString('en-IN')}`;
+      document.getElementById("nw-assets-cats").innerText = "Updated just now";
+      document.getElementById("nw-liabilities-note").innerText = data.summary.total_liabilities === 0 ? "No liabilities" : "Updated just now";
+      
+      let breakdownHTML = '';
+      if (data.breakdown) {
+          const icons = {
+              savings: '🏦',
+              investments: '📈',
+              property: '🏠',
+              gold: '🪙',
+              vehicles: '🚗',
+              other: '📦'
+          };
+          const names = {
+              savings: 'Savings Account',
+              investments: 'Mutual Funds',
+              property: 'Property',
+              gold: 'Gold',
+              vehicles: 'Vehicles',
+              other: 'Other Assets'
+          };
+          for (const [key, value] of Object.entries(data.breakdown)) {
+              if (value > 0) {
+                  breakdownHTML += `
+                  <div class="stat-row">
+                    <div class="stat-row-label">${icons[key] || '🔹'} ${names[key] || key}</div>
+                    <div class="stat-row-value">₹${value.toLocaleString('en-IN')}</div>
+                  </div>`;
+              }
+          }
+      }
+      if (breakdownHTML === '') {
+          breakdownHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);'>No assets found</div>";
+      }
+      document.getElementById("nw-breakdown").innerHTML = breakdownHTML;
+    }
+  } catch (error) {
+    console.error("Failed to load net worth", error);
+    document.getElementById("nw-total-assets").innerText = "—";
+    document.getElementById("nw-total-liabilities").innerText = "—";
+    document.getElementById("nw-net-worth").innerText = "—";
+    document.getElementById("nw-breakdown").innerHTML = "<div style='padding:20px;text-align:center;color:var(--amber); font-weight: 500;'>⚠️ Unable to connect to server</div>";
+    document.getElementById("nw-assets-cats").innerText = "Server unavailable";
+    document.getElementById("nw-liabilities-note").innerText = "Try again later";
+  }
+}
+
+// ── LOGIN (skip-wizard path, kept for compatibility) ──
+function doLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  populateAppFromUser();
+}
+
+// ── HYBRID LOADING: try cloud, fallback to local ──
+async function initApp() {
+  console.log("Cloud sync active: Attempting hybrid load...");
+  
+  // 1. Try to load from Cloud
+  if (window.loadFromCloud) {
+    const cloudData = await window.loadFromCloud("demoUser");
+    if (cloudData) {
+      USER = cloudData;
+      // Sync local storage with cloud data
+      localStorage.setItem('swt_user', JSON.stringify(USER));
+    }
+  }
+
+  // 2. If user exists (either from cloud or already in local), skip wizard
+  if (localStorage.getItem('swt_user')) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    populateAppFromUser();
+  }
+}
+
+// Fallback for immediate load if module is slow, but module will re-run initApp
+if (localStorage.getItem('swt_user') && !window.loadFromCloud) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  populateAppFromUser();
+}
+
+// ── NAVIGATION ──
+function switchPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  
+  if (name === 'networth') {
+    loadNetworth();
+  }
+  if (name === 'dashboard') {
+    loadDashboard();
+  }
+  if (name === 'alerts') {
+    loadRiskAlerts();
+  }
+}
+
+// ── RISK ALERTS ──
+async function loadRiskAlerts() {
+  document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);font-size:13px;'>Loading audit log...</div>";
+  
+  try {
+    const res = await fetch(`${API}/api/execute/audit`);
+    if (!res.ok) throw new Error("API error");
+    const data = await res.json();
+    
+    const logs = data.log || [];
+    
+    if (!document.getElementById('risk-animations')) {
+      document.head.insertAdjacentHTML('beforeend', '<style id="risk-animations">@keyframes riskFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }</style>');
+    }
+
+    const now = new Date();
+    document.getElementById("risk-last-check").innerHTML = `<span style="color:var(--teal)">🟢 Monitoring Active</span> • Updated just now`;
+
+    const hasWarn = logs.some(a => a.decision === "WARN");
+    const hasBlock = logs.some(a => a.decision === "BLOCK");
+    let bannerHTML = "";
+    if (hasBlock) {
+      bannerHTML = `
+        <div style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: red; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600;">
+          🔴 High-risk activity detected
+        </div>`;
+    } else if (hasWarn) {
+      bannerHTML = `
+        <div style="background: rgba(255,182,39,0.1); border: 1px solid rgba(255,182,39,0.3); color: var(--amber); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600;">
+          ⚠️ Unusual activity detected
+        </div>`;
+    }
+    document.getElementById("risk-banner").innerHTML = bannerHTML;
+    
+    document.getElementById("alert-total").innerText = data.total_evaluations || logs.length;
+    
+    let warnCount = 0;
+    let blockCount = 0;
+    let protectedAmt = 0;
+    
+    logs.forEach(l => {
+      if (l.decision === 'WARN') warnCount++;
+      if (l.decision === 'BLOCK') {
+        blockCount++;
+        protectedAmt += (l.amount || 0);
+      }
+    });
+    
+    document.getElementById("alert-warns").innerText = warnCount;
+    document.getElementById("alert-blocks").innerText = blockCount;
+    document.getElementById("alert-protected").innerText = `Protected ₹${protectedAmt.toLocaleString('en-IN')}`;
+    
+    // Update Dashboard Shield based on latest log
+    const latest = logs[0];
+    if (latest && document.getElementById('dash-shield-score')) {
+      const decision = latest.decision || 'ALLOW';
+      const widget = document.getElementById('dash-shield-widget');
+      const scoreDisp = document.getElementById('dash-shield-score');
+      const levelDisp = document.getElementById('dash-shield-level');
+      const explDisp = document.getElementById('dash-security-explanation');
+      const iconDisp = document.getElementById('dash-shield-icon');
+
+      widget.className = 'risk-shield-widget ' + (decision === 'BLOCK' ? 'shield-high' : decision === 'WARN' ? 'shield-medium' : 'shield-low');
+      scoreDisp.innerText = decision === 'BLOCK' ? 'HIGH' : decision === 'WARN' ? 'MEDIUM' : 'LOW';
+      levelDisp.innerText = decision === 'BLOCK' ? 'Action Blocked' : decision === 'WARN' ? 'Unusual Activity' : 'All Clear';
+      iconDisp.innerText = decision === 'BLOCK' ? '🚫' : decision === 'WARN' ? '⚠️' : '🛡️';
+      
+      if (decision === 'ALLOW') {
+        explDisp.innerHTML = "🟢 Your account activity is consistent with your usual patterns.";
+      } else {
+        explDisp.innerHTML = `<span style="color:${decision==='BLOCK'?'var(--red)':'var(--amber)'}">${latest.reason}</span>`;
+      }
+
+      // Update Pyramid
+      const pyr = latest.trust_pyramid || { identity:true, context:true, behavior:true, intent:true };
+      const items = document.querySelectorAll('#dash-pyramid .pyramid-item');
+      ['identity','context','behavior','intent'].forEach((k, i) => {
+        if (pyr[k]) items[i].classList.add('active');
+        else items[i].classList.remove('active');
+      });
+    }
+    
+    if (logs.length === 0) {
+      document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--teal);font-weight:500;font-size:13px;'>🟢 No suspicious activity detected. Your account is safe.</div>";
+      return;
+    }
+    
+    const icons = { 'ALLOW': '🟢', 'WARN': '🟡', 'BLOCK': '🔴' };
+    const classes = { 'ALLOW': 'alert-allow', 'WARN': 'alert-warn', 'BLOCK': 'alert-block' };
+    const colorClass = { 'ALLOW': 'var(--teal)', 'WARN': 'var(--amber)', 'BLOCK': 'var(--red)' };
+    
+    const html = logs.slice().reverse().map((l, idx) => {
+      const icon = icons[l.decision] || '⚪';
+      const c = classes[l.decision] || '';
+      const col = colorClass[l.decision] || 'var(--text)';
+      const time = new Date(l.timestamp).toLocaleString('en-IN', {hour: '2-digit', minute:'2-digit', month:'short', day:'numeric'});
+      const title = `${(l.action_type || 'Transaction').toUpperCase()} — ₹${(l.amount || 0).toLocaleString('en-IN')} ${l.decision}`;
+      const signals = (l.signals || []).join(' · ') || 'System check';
+      
+      const isLatest = idx === 0;
+      const latestStyles = isLatest ? `border: 1px solid ${col}; box-shadow: 0 0 15px ${col}30; animation: riskFadeIn 0.4s ease-out;` : '';
+      const badge = isLatest ? `<span style="font-size:9px; background:${col}; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">LATEST</span>` : '';
+      
+      return `
+        <div class="alert-item ${c}" style="${latestStyles}">
+          <div class="alert-icon">${icon}</div>
+          <div class="alert-body">
+            <div class="alert-title" style="display:flex;align-items:center;">${title} ${badge}</div>
+            <div class="alert-meta">${signals} · ${time}</div>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic;">"${l.reason}"</div>
+          </div>
+          <div class="alert-score" style="color:${col}">${Math.round(l.risk_score || 0)}</div>
+        </div>
+      `;
+    }).join("");
+    
+    document.getElementById("audit-log-container").innerHTML = html;
+    
+  } catch(e) {
+    console.error("Failed to load alerts:", e);
+    document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--red);font-size:13px;'>Unable to load alerts</div>";
+  }
+}
+
+function showSecurityDetail(type) {
+  const messages = {
+    identity: "Your device, location, and login biometrics match your previous activity perfectly.",
+    context: "The time, location, and network used for this action are consistent with your daily routine.",
+    behavior: "The transaction amount and frequency are well within your normal historical range.",
+    intent: "This action directly supports your stated financial goals and long-term wealth strategy."
+  };
+  const expl = document.getElementById('dash-security-explanation');
+  expl.style.animation = 'none';
+  void expl.offsetWidth;
+  expl.style.animation = 'fade-in 0.3s ease';
+  expl.innerHTML = `<b>${type.charAt(0).toUpperCase()+type.slice(1)}:</b> ${messages[type]}`;
+}
+
+function renderTransactions() {
+  const container = document.getElementById('transactions-list');
+  if (!container) return;
+
+  if (!USER.transactions || USER.transactions.length === 0) {
+    container.innerHTML = "<div style='padding:10px;text-align:center;color:var(--text-muted);font-size:13px;'>No transactions found</div>";
+    return;
+  }
+
+  container.innerHTML = USER.transactions.map(tx => `
+    <div class="tx-row">
+      <span class="tx-label">${tx.label}</span>
+      <span class="${tx.type}">
+        ${tx.type === 'debit' ? '-' : '+'}₹${tx.amount.toLocaleString('en-IN')}
+      </span>
+    </div>
+  `).join('');
+}
+
+// ── HELPERS ──
+function buildReasoningPanel() {
+  const savings = USER.income - USER.monthly_expenses;
+  const rate = USER.income > 0 ? Math.round((savings / USER.income) * 100) : 0;
+  
+  let explanation = "";
+  if (rate > 40) {
+    explanation = `Since you're earning ₹${USER.income.toLocaleString('en-IN')}/month and already saving ${rate}% of it, you have a very strong foundation. This consistency allows us to look at more growth-oriented options with confidence.`;
+  } else if (rate > 20) {
+    explanation = `With an income of ₹${USER.income.toLocaleString('en-IN')} and a healthy ${rate}% savings rate, you're doing well. This suggestion helps optimize your existing surplus for your ${USER.goal} goal.`;
+  } else {
+    explanation = `Given your monthly income and current spending, focusing on this path will help you build a more robust safety net while still working towards your ${USER.goal}.`;
+  }
+
+  return `
+    <div class="ai-reason">
+      <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+        <span>💡</span> Why this suggestion?
+      </div>
+      <div style="opacity:0.9;">
+        ${explanation}
+      </div>
+    </div>
+  `;
+}
+
+function buildAgentFlow(data) {
+  const steps = [
+    { icon: '❓', label: 'Query', content: data.query },
+    { icon: '📊', label: 'Analyst', content: `Income ₹${(data.income||0).toLocaleString()}, Savings ${data.savings_rate}%` },
+    { icon: '🔍', label: 'Search', content: data.search },
+    { icon: '🧠', label: 'Reasoning', content: data.reason },
+    { icon: '💬', label: 'Decision', content: data.answer, final: true }
+  ];
+
+  return `
+    <div class="agent-flow">
+      <div style="font-size:9px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; letter-spacing:0.1em; font-weight:800; display:flex; align-items:center; gap:6px;">
+        <span style="width:6px; height:6px; background:var(--teal); border-radius:50%; animation:pulse-glow 1s infinite;"></span>
+        Cortex Agent Trace
+      </div>
+      ${steps.map((s, i) => `
+        <div class="step ${s.final ? 'final' : ''}" style="animation: fade-in 0.4s ease forwards; animation-delay: ${i * 0.5}s; opacity:0;">
+          <span style="margin-right:6px;">${s.icon}</span> <b>${s.label}:</b> ${s.content}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ── SIMULATE FRAUD ──
+async function simulateFraud() {
+  if (!confirm("🚨 Proceed with Fraud Simulation?\n\nThis will trigger a high-risk scenario: ₹5,00,000 investment from a new device at 2 AM with failed OTP attempts.\n\nSee how SecureWealth Twin protects you!")) return;
+  
+  switchPage('chat', document.querySelector('.nav-item:nth-child(3)'));
+  addMessage('user', "Simulate high-risk transaction: Invest ₹5,00,000");
+  showTyping();
+  
+  try {
+    const res = await fetch(`${API}/api/simulate/fraud`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    
+    // Simulate a slight delay for dramatic effect
+    setTimeout(() => {
+      removeTyping();
+      handleChatResponse({
+          type: 'action_response',
+          execution: data,
+          ai_explanation: data.ai_explanation
+      }, "Invest ₹5,00,000");
+      
+      // Trigger a browser notification/alert if it's really bad
+      if (data.risk.decision === 'BLOCK') {
+          setTimeout(() => {
+              const alertDiv = document.createElement('div');
+              alertDiv.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--red); color:white; padding:16px 24px; border-radius:12px; font-weight:700; z-index:9999; box-shadow:0 10px 40px rgba(255,0,0,0.4); animation:slide-up 0.4s ease; display:flex; align-items:center; gap:12px;";
+              alertDiv.innerHTML = `<span>🚨 SECURITY ALERT: High-risk action blocked.</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">OK</button>`;
+              document.body.appendChild(alertDiv);
+          }, 800);
+      }
+    }, 1500);
+  } catch(e) {
+    removeTyping();
+    console.error(e);
+    alert("Simulation failed. Make sure backend is running.");
+  }
+}
+
+// ── WHY TOOLTIP ──
+
+// ── CHAT ──
+function setPrompt(text) {
+  document.getElementById('chat-input').value = text;
+  document.getElementById('chat-input').focus();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  // Extract amount for high-value check
+  let amount = 0;
+  const match = msg.replace(/,/g, '').match(/(\d+)/);
+  if (match && (msg.toLowerCase().includes('invest') || msg.toLowerCase().includes('sip') || msg.toLowerCase().includes('buy'))) {
+    amount = parseInt(match[1]);
+  }
+
+  // Dynamic Risk Level Calculation
+  const usual = USER.avg_investment || 5000;
+  let riskStr = "LOW";
+  let riskColor = "var(--teal)";
+  let riskMsg = "🛡 All clear";
+  
+  if (amount > usual * 4) {
+    riskStr = "HIGH";
+    riskColor = "var(--red)";
+    riskMsg = "🛑 High risk – verification required";
+  } else if (amount > usual * 2) {
+    riskStr = "MEDIUM";
+    riskColor = "var(--amber)";
+    riskMsg = "⚠️ Unusual activity detected";
+  }
+  
+  const rLabel = document.getElementById('dash-risk-level');
+  const rDelta = document.getElementById('dash-risk-delta');
+  if (rLabel && rDelta) {
+    rLabel.innerText = riskStr;
+    rLabel.style.color = riskColor;
+    rDelta.innerText = riskMsg;
+  }
+
+  const processChat = async (message) => {
+    input.value = '';
+    addMessage('user', message);
+    showTyping();
+
+    try {
+      const res = await fetch(`${API}/api/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message, user_profile: USER })
+      });
+      const data = await res.json();
+      removeTyping();
+      handleChatResponse(data, message);
+    } catch(e) {
+      removeTyping();
+      demoFallback(message);
+    }
+  };
+
+  if (amount > 50000) {
+    requireOTP(amount, () => processChat(msg));
+  } else {
+    processChat(msg);
+  }
+}
+
+function handleChatResponse(data, query) {
+  if (data.type === 'action_response') {
+    const exec = data.execution || {};
+    const risk = exec.risk || {};
+    const decision = risk.decision || 'ALLOW';
+    const cooldown = exec.cooldown || 0;
+
+    // Show risk panel
+    const panelClass = decision === 'BLOCK' ? 'block' : decision === 'WARN' ? 'warn' : 'allow';
+    const icon = decision === 'BLOCK' ? '🔴' : decision === 'WARN' ? '🟡' : '🟢';
+    const signals = (risk.signals || []).map(s => `<span class="signal-tag">${s}</span>`).join('');
+    const pyramid = risk.trust_pyramid || {};
+
+    let riskHTML = `
+      <div class="risk-panel ${panelClass}">
+        <div class="risk-panel-header">
+          <span style="font-size:20px;">${icon}</span>
+          <span class="risk-badge badge-${decision.toLowerCase()}">${decision}</span>
+          <span class="risk-score-display" style="color:${decision==='BLOCK'?'var(--red)':decision==='WARN'?'var(--amber)':'var(--teal)'}">${risk.score || 0}/100</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${risk.reason || ''}</div>
+        <div class="signals-list">${signals}</div>
+        <div class="pyramid-grid" style="margin-top:12px;">
+          ${['identity','context','behavior','intent'].map(k => `
+            <div class="pyramid-item ${pyramid[k] ? 'active' : ''}">
+              <div class="pyr-dot"></div>
+              <div class="pyr-label">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
+            </div>`).join('')}
+        </div>
+        ${exec.recommendation ? `
+          <div style="margin-top:14px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid ${decision==='BLOCK'?'var(--red)':'var(--teal)'};">
+            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px; letter-spacing:0.05em;">💡 Recommendation</div>
+            <div style="font-size:13px; color:var(--text-primary); font-weight:500;">${exec.recommendation}</div>
+          </div>` : ''}
+      </div>`;
+
+    const messages = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.innerHTML = riskHTML;
+    div.style.animation = 'msg-in 0.3s ease';
+    messages.appendChild(div);
+
+    // COOLDOWN MECHANISM
+    if (cooldown > 0) {
+      const bannerCol = decision === 'BLOCK' ? 'var(--red)' : 'var(--amber)';
+      const bannerBg = decision === 'BLOCK' ? 'var(--red-dim)' : 'var(--amber-dim)';
+      const bannerTitle = decision === 'BLOCK' ? 'High Risk Detected' : 'Unusual Activity Detected';
+      
+      const bannerHTML = `
+        <div id="cooldown-banner" style="background:${bannerBg}; border:1px solid ${bannerCol}; color:${bannerCol}; padding:12px; border-radius:12px; margin:10px 0; font-weight:600; text-align:center; animation:msg-in 0.3s ease;">
+          ⚠️ ${bannerTitle}<br>
+          <span id="cooldown-timer" style="font-size:12px; font-weight:400;">Retry in ${cooldown}...</span>
+        </div>
+      `;
+      const bannerDiv = document.createElement('div');
+      bannerDiv.innerHTML = bannerHTML;
+      messages.appendChild(bannerDiv);
+
+      const input = document.getElementById('chat-input');
+      const btn = document.querySelector('.send-btn');
+      input.disabled = true;
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+
+      let timeLeft = cooldown;
+      const timer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          bannerDiv.remove();
+          input.disabled = false;
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          input.focus();
+        } else {
+          document.getElementById('cooldown-timer').innerText = `Retry in ${timeLeft}...`;
+        }
+      }, 1000);
+    }
+
+    const reason = data.reason || exec.reason || data.ai_explanation;
+    addMessage('ai', data.ai_explanation || exec.message || 'Action evaluated.', reason);
+    
+    // Add reasoning and agent trace
+    const lastMsg = document.getElementById('chat-messages').lastElementChild;
+    const bubbleWrapper = lastMsg.querySelector('div > div');
+    
+    const reasoningDiv = document.createElement('div');
+    reasoningDiv.innerHTML = buildReasoningPanel();
+    bubbleWrapper.appendChild(reasoningDiv);
+
+    const agentDiv = document.createElement('div');
+    agentDiv.innerHTML = buildAgentFlow({
+      query: query || 'Action Request',
+      income: USER.income,
+      spending: USER.monthly_expenses,
+      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
+      search: "Stable history, low risk indicators",
+      reason: data.reason || exec.reason || "Contextual risk analysis complete",
+      answer: data.ai_explanation || exec.message || data.reply || "Approved"
+    });
+    bubbleWrapper.appendChild(agentDiv);
+
+    // Show simulation if available
+    const sim = exec.simulation || exec.simulation_preview;
+    if (sim && sim.nudge_message) {
+      setTimeout(() => {
+        addMessage('ai', `📊 ${sim.nudge_message}\n\nIf you invest ₹${(sim.projection?.[0]?.invested||0).toLocaleString('en-IN')}/month for 10 years, you could grow to ₹${sim.final_value?.toLocaleString('en-IN') || '?'}`, 'Based on compounding power and 12% expected annual returns.');
+      }, 500);
+    }
+
+  } else if (data.type === 'simulation_advice') {
+    let reply = data.reply || '';
+    if (data.summary) reply += `\n\n💰 Final value: ₹${(data.summary.final_value||0).toLocaleString('en-IN')}\n⚡ ${data.summary.nudge_message}`;
+    addMessage('ai', reply, 'Based on your income and investment timeline.');
+    
+    const lastMsg = document.getElementById('chat-messages').lastElementChild;
+    const bubbleWrapper = lastMsg.querySelector('div > div');
+    const agentDiv = document.createElement('div');
+    agentDiv.innerHTML = buildAgentFlow({
+      query: query || 'Simulator Advice',
+      income: USER.income,
+      spending: USER.monthly_expenses,
+      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
+      search: "Market trends stable, historical returns 12%",
+      reason: "Projection based on compounding",
+      answer: "Growth path simulated"
+    });
+    bubbleWrapper.appendChild(agentDiv);
+
+  } else if (data.type === 'networth_snapshot') {
+    addMessage('ai', data.reply, 'Based on your savings and investments on file.');
+    
+    const lastMsg = document.getElementById('chat-messages').lastElementChild;
+    const bubbleWrapper = lastMsg.querySelector('div > div');
+    const agentDiv = document.createElement('div');
+    agentDiv.innerHTML = buildAgentFlow({
+      query: query || 'Net Worth Inquiry',
+      income: USER.income,
+      spending: USER.monthly_expenses,
+      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
+      search: "Asset/Liability database synchronized",
+      reason: "Full balance sheet aggregation",
+      answer: "Wealth snapshot generated"
+    });
+    bubbleWrapper.appendChild(agentDiv);
+
+  } else {
+    addMessage('ai', data.reply || 'I can help with that!', data.reason);
+    
+    const lastMsg = document.getElementById('chat-messages').lastElementChild;
+    const bubbleWrapper = lastMsg.querySelector('div > div');
+    const agentDiv = document.createElement('div');
+    agentDiv.innerHTML = buildAgentFlow({
+      query: query || 'General Chat',
+      income: USER.income,
+      spending: USER.monthly_expenses,
+      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
+      search: "User context loaded from profile",
+      reason: "Intent matching complete",
+      answer: data.reply || "Help provided"
+    });
+    bubbleWrapper.appendChild(agentDiv);
+  }
+}
+
+function demoFallback(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes('1 lakh') || m.includes('100000')) {
+    handleChatResponse({
+      type: 'action_response',
+      ai_explanation: "We've blocked this transaction to protect your account. This amount is 20x your usual pattern and was detected on an unusual hour. Please review and try again if this was intentional.",
+      execution: {
+        status: 'blocked',
+        risk: { score: 65, decision: 'BLOCK', level: 'HIGH', reason: "We noticed an unusually large amount at an unusual hour.", signals: ["Unusual time: 2:00 AM", "Amount is 20x your usual pattern", "Round number amount"], trust_pyramid: { identity: false, context: true, behavior: true, intent: true } }
+      }
+    }, msg);
+  } else if (m.includes('sip') || m.includes('invest')) {
+    handleChatResponse({
+      type: 'action_response',
+      ai_explanation: "Great news! Your investment has been approved. This amount is consistent with your usual behavior.",
+      execution: {
+        status: 'approved',
+        risk: { score: 0, decision: 'ALLOW', level: 'LOW', reason: "This action looks normal and matches your usual behavior.", signals: [], trust_pyramid: { identity: false, context: false, behavior: false, intent: false } },
+        simulation: { final_value: 1161695, nudge_message: "Starting 1 year later costs you ₹1,87,587", projection: [{invested:5000, value:5050}] }
+      }
+    }, msg);
+  } else if (m.includes('tax')) {
+    handleChatResponse({
+      reply: "For tax savings, consider ELSS mutual funds (Section 80C up to ₹1.5L), NPS (Section 80CCD up to ₹50K extra), and health insurance premiums (Section 80D). Given your income of ₹55K/month, ELSS via SIP would be most efficient for your house goal.",
+      reason: "Based on your income bracket and 7-year goal."
+    }, msg);
+  } else {
+    handleChatResponse({
+      reply: "Based on your profile — ₹55K income, medium risk appetite, house goal in 7 years — I'd recommend starting a ₹5,500/month SIP in a large-cap index fund. This represents 10% of your income and will compound significantly over your 7-year horizon.",
+      reason: "Based on your income, risk profile, and goal timeline."
+    }, msg);
+  }
+}
+
+let lastMessageText = "";
+
+function addMessage(role, text, reason) {
+  const messages = document.getElementById('chat-messages');
+  
+  // HARD CLEAN: Remove ghost duplicates / previous messages before AI response
+  if (role === 'ai') {
+    const existing = messages.querySelectorAll('.msg');
+    existing.forEach((m, idx) => {
+      // Keep user's last question but remove ghost duplicates
+      if (m.innerText.includes(text.substring(0, 30))) {
+        m.remove();
+      }
+    });
+  }
+
+  // Prevent duplicate rendering
+  if (messages.lastElementChild && messages.lastElementChild.innerText.includes(text.substring(0, 30))) {
+    return;
+  }
+
+  console.log("Message Rendered. Total messages:", messages.children.length + 1);
+  const div = document.createElement('div');
+  div.className = `msg ${role === 'ai' ? 'ai' : 'user'}`;
+
+  const formattedText = (text || '').replace(/\n/g, '<br>');
+  const whySection = reason ? createWhyTooltip(reason) : '';
+
+  div.innerHTML = `
+    <div class="msg-avatar">${role === 'ai' ? 'W' : 'P'}</div>
+    <div style="flex:1;">
+      <div class="msg-bubble" style="display:inline-block">${formattedText} ${whySection}</div>
+    </div>`;
+
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function showTyping() {
+  const messages = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="msg-avatar">W</div>
+    <div class="msg-bubble" style="padding:14px 18px;">
+      <div class="typing-dots">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+let simTimeout;
+
+function scheduleSimulatorUpdate() {
+  clearTimeout(simTimeout);
+  simTimeout = setTimeout(() => {
+    updateSimulator();
+  }, 300); // 300ms delay
+}
+
+async function updateSimulator() {
+  const monthly = parseInt(document.getElementById("sim-amount").value);
+  const years = parseInt(document.getElementById("sim-years").value);
+  const rate = parseFloat(document.getElementById("sim-rate").value);
+
+  // Update slider label values so they are responsive
+  document.getElementById('sim-amount-val').textContent = '₹' + monthly.toLocaleString('en-IN');
+  document.getElementById('sim-years-val').textContent = years + ' years';
+  document.getElementById('sim-rate-val').textContent = rate + '%';
+
+  const res = await fetch("http://localhost:8000/api/ai/simulate", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      monthly_amount: monthly,
+      years: years,
+      annual_rate: rate
+    })
+  });
+
+  const data = await res.json();
+  const s = data.summary;
+
+  // Using final_value_now if final_value is not present to match backend
+  const final = s.final_value || s.final_value_now;
+  const invested = monthly * years * 12;
+
+  // Bottom values
+  document.getElementById("sim-final").innerText = `₹${final.toLocaleString('en-IN')}`;
+  document.getElementById("sim-invested").innerText = `₹${invested.toLocaleString('en-IN')}`;
+  document.getElementById("sim-gain").innerText = `₹${(final - invested).toLocaleString('en-IN')}`;
+  document.getElementById("nudge-cost").innerText = `₹${s.opportunity_cost.toLocaleString('en-IN')}`;
+
+  // Right Panel values
+  document.getElementById("side-invested").innerText = `₹${(s.invested || invested).toLocaleString('en-IN')}`;
+  document.getElementById("side-returns").innerText = `₹${(s.wealth_gain || (final - invested)).toLocaleString('en-IN')}`;
+  
+  const finalNow = s.final_value_now || final;
+  const inv = s.invested || invested;
+  if (inv > 0) {
+      document.getElementById("multiplier").innerText = (finalNow / inv).toFixed(1) + "x";
+  }
+}
+
+scheduleSimulatorUpdate();
+
+// ── AUTO-REFRESH ALERTS ──
+setInterval(() => {
+  if (document.getElementById('page-alerts').classList.contains('active')) {
+    loadRiskAlerts();
+  }
+}, 5000);
+
+// ── RESET USER (TESTING) ──
+function resetUser() {
+  localStorage.removeItem('swt_user');
+  location.reload();
+}
+// ── SECURITY (OTP) ──
+let pendingInvestment = null;
+
+function requireOTP(amount, callback) {
+  pendingInvestment = callback;
+  document.getElementById('otp-modal').style.display = 'flex';
+  document.getElementById('otp-input').value = '';
+  document.getElementById('otp-input').focus();
+}
+
+// ══════════════════════════════════════════════════
+// SECUREWEALTH TWIN v2.0 — NEW JS FEATURES
+// ══════════════════════════════════════════════════
+
+// ── COUNTER ANIMATION ──
+function animateCounter(el, target, prefix='₹', suffix='') {
+  if (!el) return;
+  const isRupee = prefix === '₹';
+  const start = 0;
+  const duration = 1200;
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (target - start) * eased);
+    el.textContent = prefix + (isRupee ? current.toLocaleString('en-IN') : current) + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ── POPULATE BANK CARD ──
+function populateBankCard() {
+  const nameEl = document.getElementById('dash-card-name');
+  const nwEl   = document.getElementById('dash-card-nw');
+  const bcName = document.getElementById('bc-name');
+  const bcBal  = document.getElementById('bc-balance');
+  if (nameEl) nameEl.textContent = USER.name || 'Account Holder';
+  if (bcName) bcName.textContent = USER.name || '—';
+  const nw = (USER.current_savings||0) + (USER.investments_value||0) + (USER.assets?.gold||0);
+  if (nwEl) animateCounter(nwEl, nw);
+  if (bcBal) animateCounter(bcBal, nw);
+}
+
+// ── ACTIVITY FEED ──
+const STATIC_FEED = [
+  { dot:'info',  agent:'ai',     msg:'Financial Profile Analyser generated wealth archetype',        time:'just now' },
+  { dot:'allow', agent:'wealth', msg:'Wealth Coach loaded personalized context for session',          time:'1 min ago' },
+  { dot:'allow', agent:'ai',     msg:'SIP Simulator projected ₹11.6L corpus over 10 years',          time:'2 min ago' },
+  { dot:'allow', agent:'ai',     msg:'Net Worth Calculator computed ₹3.1L total assets',             time:'3 min ago' },
+  { dot:'allow', agent:'ai',     msg:'Account Aggregator synced 3 bank accounts',                    time:'5 min ago' },
+];
+
+async function loadActivityFeed() {
+  const feed = document.getElementById('activity-feed');
+  if (!feed) return;
+  let items = [...STATIC_FEED];
+  try {
+    const res = await fetch(`${API}/api/execute/audit`);
+    if (res.ok) {
+      const data = await res.json();
+      const logs = (data.log || []).slice(-3).reverse();
+      logs.forEach(l => {
+        const dot = l.decision === 'BLOCK' ? 'block' : l.decision === 'WARN' ? 'warn' : 'allow';
+        const cls = l.decision === 'BLOCK' ? 'fraud' : l.decision === 'WARN' ? 'risk' : 'wealth';
+        const score = Math.round(l.risk_score || 0);
+        const amt = (l.amount||0).toLocaleString('en-IN');
+        items.unshift({
+          dot, agent: cls,
+          msg: `Fraud Shield scanned ₹${amt} ${l.action_type||'txn'} → ${l.decision} (Score: ${score})`,
+          time: new Date(l.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+        });
+      });
+      // Update risk meter
+      const latest = data.log?.[data.log.length - 1];
+      if (latest) updateRiskMeter(latest.risk_score||0, latest.decision||'ALLOW');
+    }
+  } catch(e) {}
+  items = items.slice(0, 5);
+  feed.innerHTML = items.map(i => `
+    <div class="activity-item">
+      <div class="activity-dot ${i.dot}"></div>
+      <div class="activity-content">
+        <div class="activity-msg">${i.msg}</div>
+        <div class="activity-time">${i.time}</div>
+      </div>
+      <div class="activity-agent ${i.agent}">${i.agent === 'fraud' ? 'Shield' : i.agent === 'risk' ? 'Risk' : i.agent === 'wealth' ? 'Coach' : 'AI'}</div>
+    </div>`).join('');
+}
+setInterval(() => {
+  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadActivityFeed();
+}, 10000);
+
+// ── RISK METER WIDGET ──
+function updateRiskMeter(score, decision) {
+  const fill = document.getElementById('rmt-fill');
+  const label = document.getElementById('rmt-label');
+  if (!fill || !label) return;
+  const pct = Math.min(score, 100);
+  fill.style.width = pct + '%';
+  if (decision === 'BLOCK') { fill.style.background = 'var(--red)'; label.style.color='var(--red)'; label.textContent = 'HIGH RISK'; }
+  else if (decision === 'WARN') { fill.style.background = 'var(--amber)'; label.style.color='var(--amber)'; label.textContent = 'MED RISK'; }
+  else { fill.style.background = 'var(--teal)'; label.style.color='var(--teal)'; label.textContent = 'LOW RISK'; }
+}
+
+// ── SPENDING INTELLIGENCE ──
+function renderSpendingIntel(container) {
+  if (!container) return;
+  const income = USER.income || 55000;
+  const cats = [
+    { label:'🏠 Housing',   pct:27, color:'var(--blue)' },
+    { label:'🛒 Food',      pct:18, color:'var(--teal)' },
+    { label:'🚗 Transport', pct:10, color:'var(--gold)' },
+    { label:'🎬 Leisure',   pct:8,  color:'var(--red)' },
+    { label:'💊 Health',    pct:5,  color:'#a78bfa' },
+  ];
+  container.innerHTML = `
+    <div class="section-title" style="font-size:13px;">Spending Intelligence</div>
+    ${cats.map(c => `
+      <div class="spend-bar-row">
+        <div class="spend-bar-label">${c.label}</div>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:0%;background:${c.color};" data-pct="${c.pct}"></div></div>
+        <div class="spend-bar-val">₹${Math.round(income*c.pct/100).toLocaleString('en-IN')}</div>
+      </div>`).join('')}
+    <div class="ai-insight-bubble" id="spend-insight-bubble">
+      💡 Loading AI spending insight...
+    </div>`;
+  // Animate bars
+  setTimeout(() => {
+    container.querySelectorAll('.spend-bar-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 100);
+  // Fetch AI tip
+  fetch(`${API}/api/ai/chat`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ message: 'Give me one short spending tip in 1 sentence based on my profile.', user_profile: USER })
+  }).then(r => r.json()).then(d => {
+    const bub = document.getElementById('spend-insight-bubble');
+    if (bub) bub.innerHTML = '💡 ' + (d.reply || 'Keep your spending below 70% of income for healthy savings!');
+  }).catch(() => {
+    const bub = document.getElementById('spend-insight-bubble');
+    if (bub) bub.innerHTML = '💡 Tip: Keep housing + food under 50% of income to hit your savings goals faster.';
+  });
+}
+
+// ── TRANSFER PAGE ──
+let txScanInterval = null;
+let txCountdownTimer = null;
+let txCurrentDecision = null;
+
+function updateRecipientPreview() {
+  const name = document.getElementById('tx-recipient')?.value.trim() || '—';
+  const acc  = document.getElementById('tx-account')?.value.trim() || '';
+  const nameEl = document.getElementById('rec-name-display');
+  const accEl  = document.getElementById('rec-acc-display');
+  const avEl   = document.getElementById('rec-avatar');
+  if (nameEl) nameEl.textContent = name || '—';
+  if (accEl)  accEl.textContent  = acc  ? 'NOVA ···· ···· ' + acc.slice(-4).padStart(4,'·') : 'NOVA ···· ···· ····';
+  if (avEl)   avEl.textContent   = (name[0] || 'R').toUpperCase();
+}
+
+function updateAmountPreview() {
+  const v = parseFloat(document.getElementById('tx-amount')?.value || 0);
+  const el = document.getElementById('tx-receive-amt');
+  if (el) el.textContent = '₹' + (v||0).toLocaleString('en-IN');
+}
+
+function setTxAmount(v) {
+  const inp = document.getElementById('tx-amount');
+  if (inp) { inp.value = v; updateAmountPreview(); }
+}
+
+function setPayStep(step) {
+  for (let i = 1; i <= 4; i++) {
+    const s = document.getElementById('pstep-' + i);
+    const l = document.getElementById('psline-' + i);
+    if (!s) continue;
+    s.className = 'ps-step' + (i < step ? ' done' : i === step ? ' active' : '');
+    if (l) l.className = 'ps-line' + (i < step ? ' done' : i === step ? ' active' : '');
+  }
+}
+
+const SCAN_STEPS = [
+  'Scanning device fingerprint...',
+  'Checking behavioral patterns...',
+  'Comparing to spending history...',
+  'Evaluating transaction timing...',
+  'Analysing round-number signals...',
+  'Querying Trust Pyramid layers...',
+  'Generating risk score...',
+];
+
+function initiateTransfer() {
+  const amount    = parseFloat(document.getElementById('tx-amount')?.value || 0);
+  const recipient = document.getElementById('tx-recipient')?.value.trim();
+  if (!amount || amount <= 0)    { alert('Please enter a valid amount.'); return; }
+  if (!recipient)                { alert('Please enter a recipient name.'); return; }
+
+  // Show PIN card
+  const pinCard = document.getElementById('pin-card');
+  if (pinCard) {
+    pinCard.style.display = 'block';
+    document.getElementById('pin1')?.focus();
+    // Wait for PIN then proceed
+    pinCard._resolve = () => runAIScan(amount);
+    return;
+  }
+  runAIScan(amount);
+}
+
+function pinNav(el, prevId, nextId) {
+  if (el.value && nextId) { document.getElementById(nextId)?.focus(); }
+  // Check if all 4 filled
+  const vals = ['pin1','pin2','pin3','pin4'].map(id => document.getElementById(id)?.value || '');
+  if (vals.every(v => v)) {
+    const pin = vals.join('');
+    if (pin === '1234') {
+      document.getElementById('pin-card').style.display = 'none';
+      ['pin1','pin2','pin3','pin4'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+      runAIScan(parseFloat(document.getElementById('tx-amount')?.value || 0));
+    } else {
+      setTimeout(() => {
+        ['pin1','pin2','pin3','pin4'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+        document.getElementById('pin1')?.focus();
+        alert('Incorrect PIN. Demo PIN is 1234.');
+      }, 200);
+    }
+  }
+}
+
+function runAIScan(amount) {
+  setPayStep(2);
+  // Show overlay
+  const overlay = document.getElementById('ai-scan-overlay');
+  const scanText = document.getElementById('scan-text');
+  const progress = document.getElementById('scan-progress');
+  const pctEl    = document.getElementById('scan-pct');
+  overlay.style.display = 'flex';
+
+  let stepIdx = 0;
+  let pct = 0;
+  const totalMs = 2600;
+  const stepMs  = totalMs / SCAN_STEPS.length;
+
+  txScanInterval = setInterval(() => {
+    if (stepIdx < SCAN_STEPS.length) {
+      scanText.textContent = SCAN_STEPS[stepIdx];
+      scanText.style.animation = 'none';
+      void scanText.offsetWidth;
+      scanText.style.animation = 'text-flicker 0.4s ease';
+      stepIdx++;
+    }
+    pct = Math.min(pct + (100 / SCAN_STEPS.length), 100);
+    progress.style.width = pct + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+  }, stepMs);
+
+  setTimeout(() => {
+    clearInterval(txScanInterval);
+    overlay.style.display = 'none';
+    callExecuteAPI(amount);
+  }, totalMs);
+}
+
+async function callExecuteAPI(amount) {
+  setPayStep(3);
+  const avg = USER.avg_investment || 5000;
+  let result = null;
+  try {
+    const res = await fetch(`${API}/api/execute`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        action_type: 'Bank Transfer',
+        amount: amount,
+        avg_amount: avg,
+        is_new_device: false,
+        seconds_since_login: Math.floor((Date.now() - (window._loginTime||Date.now()))/1000),
+        is_first_investment_type: false,
+        otp_retry_count: 0,
+        monthly_amount: avg,
+        years: USER.timeline || 7,
+        user_profile: USER
+      })
+    });
+    result = await res.json();
+  } catch(e) {
+    // Fallback
+    const score = amount > avg * 3 ? 72 : amount > avg * 1.5 ? 45 : 12;
+    result = {
+      status: score >= 60 ? 'blocked' : score >= 30 ? 'delayed' : 'approved',
+      risk: {
+        score, decision: score >= 60 ? 'BLOCK' : score >= 30 ? 'WARN' : 'ALLOW',
+        level: score >= 60 ? 'HIGH' : score >= 30 ? 'MEDIUM' : 'LOW',
+        reason: score >= 60
+          ? 'This transfer amount is significantly higher than your usual patterns.'
+          : score >= 30
+          ? 'This transfer shows some unusual patterns. Please review before proceeding.'
+          : 'This transfer matches your normal behavior and appears safe.',
+        signals: score > 30 ? ['Amount unusually high compared to your normal transactions'] : [],
+        trust_pyramid: { identity: score < 60, context: score < 40, behavior: score < 30, intent: score < 20 }
+      },
+      message: score >= 60 ? 'Transfer blocked for safety.' : score >= 30 ? 'Review required.' : 'Transfer approved.',
+      cooldown: score >= 60 ? 30 : score >= 30 ? 15 : 0
+    };
+  }
+  showTransferDecision(result, amount);
+}
+
+function showTransferDecision(result, amount) {
+  const risk = result.risk || {};
+  const decision = risk.decision || 'ALLOW';
+  txCurrentDecision = decision;
+
+  document.getElementById('transfer-step-form').style.display = 'none';
+  document.getElementById('transfer-step-decision').style.display = 'block';
+
+  const card = document.getElementById('tx-decision-card');
+  const cls  = decision === 'BLOCK' ? 'block' : decision === 'WARN' ? 'warn' : 'allow';
+  card.className = 'decision-card ' + cls;
+
+  // Badge
+  const icon = decision === 'BLOCK' ? '🚫 BLOCKED' : decision === 'WARN' ? '⚠️ REVIEW NEEDED' : '✅ APPROVED';
+  document.getElementById('tx-decision-badge').innerHTML =
+    `<div class="decision-badge ${cls}">${icon}</div>`;
+
+  // Gauge
+  const score = risk.score || 0;
+  const arc = document.getElementById('gauge-arc');
+  const gtxt = document.getElementById('gauge-text');
+  if (arc && gtxt) {
+    const maxDash = 204;
+    const dashOffset = maxDash - (score / 100) * maxDash;
+    const color = decision === 'BLOCK' ? '#FF4757' : decision === 'WARN' ? '#FFB627' : '#00D4AA';
+    setTimeout(() => {
+      arc.style.strokeDashoffset = dashOffset;
+      arc.style.stroke = color;
+      gtxt.textContent = score;
+      gtxt.setAttribute('fill', color);
+    }, 100);
+  }
+
+  // AI reason
+  document.getElementById('tx-ai-reason').textContent =
+    '"' + (risk.reason || result.message || 'Analysis complete.') + '"';
+
+  // Trust pyramid (top=Intent, bottom=Identity for visual widths)
+  const pyr = risk.trust_pyramid || {};
+  const layers = [
+    { key:'intent',   label:'Intent',   icon:'🎯' },
+    { key:'behavior', label:'Behavior', icon:'📊' },
+    { key:'context',  label:'Context',  icon:'🕐' },
+    { key:'identity', label:'Identity', icon:'🔒' },
+  ];
+  document.getElementById('tx-trust-pyramid').innerHTML = layers.map(l => {
+    const flagged = pyr[l.key];
+    const cls2 = flagged ? 'risk' : 'safe';
+    const status = flagged ? '⚠ Flagged' : '✓ Safe';
+    return `<div class="tp-layer ${cls2}"><div class="tp-dot"></div>${l.icon} ${l.label} — ${status}</div>`;
+  }).join('');
+
+  // Signal pills
+  const signals = risk.signals || [];
+  document.getElementById('tx-signals-list').innerHTML = signals.length
+    ? signals.map((s, i) => `<span class="signal-pill ${decision==='BLOCK'?'danger':decision==='WARN'?'warn':''}" style="animation-delay:${i*0.1}s">${s}</span>`).join('')
+    : '<span class="signal-pill">No anomalies detected</span>';
+
+  // Action buttons
+  const actDiv = document.getElementById('tx-decision-actions');
+  if (decision === 'ALLOW') {
+    actDiv.innerHTML = `<button class="send-btn-gold" onclick="completeTransfer(${amount})">✅ Confirm & Send ₹${amount.toLocaleString('en-IN')}</button>
+      <button class="btn-sm" style="width:100%;margin-top:8px;" onclick="resetTransfer()">← Change Amount</button>`;
+  } else if (decision === 'WARN') {
+    const cooldown = result.cooldown || 15;
+    actDiv.innerHTML = `
+      <div style="text-align:center;margin-bottom:14px;">
+        <div class="countdown-ring">
+          <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="35" stroke-width="6"/><circle class="ring-fill" id="cd-ring" cx="40" cy="40" r="35" stroke="${'#FFB627'}" stroke-width="6" stroke-dasharray="220" stroke-dashoffset="0"/></svg>
+          <div class="countdown-number" id="cd-number">${cooldown}</div>
+        </div>
+        <div style="font-size:11px;color:var(--amber);font-weight:600;">Review period before you can confirm</div>
+      </div>
+      <button class="confirm-anyway-btn" id="confirm-anyway-btn" disabled onclick="completeTransfer(${amount})">⚠️ Confirm Anyway</button>
+      <button class="btn-sm" style="width:100%;margin-top:8px;" onclick="resetTransfer()">← Cancel Transfer</button>`;
+    startCountdown(cooldown);
+  } else {
+    actDiv.innerHTML = `
+      <div class="ai-quote-box" style="border-color:var(--red);background:rgba(255,71,87,0.06);">
+        🚫 This transfer has been blocked to protect your account.<br>
+        <strong>Blocked signals:</strong> ${signals.join(', ') || 'High risk score'}
+      </div>
+      <a href="tel:18001234567" class="send-btn-gold" style="display:block;text-align:center;text-decoration:none;background:var(--red-dim);color:var(--red);border:2px solid var(--red);">📞 Contact Support</a>
+      <button class="btn-sm" style="width:100%;margin-top:8px;" onclick="resetTransfer()">← Try Different Amount</button>`;
+  }
+
+  // Update activity feed
+  loadActivityFeed();
+  updateRiskMeter(score, decision);
+}
+
+function startCountdown(seconds) {
+  const ring   = document.getElementById('cd-ring');
+  const numEl  = document.getElementById('cd-number');
+  const btn    = document.getElementById('confirm-anyway-btn');
+  const total  = 220;
+  let left = seconds;
+  txCountdownTimer = setInterval(() => {
+    left--;
+    if (numEl) numEl.textContent = left;
+    if (ring)  ring.style.strokeDashoffset = total - (total * left / seconds);
+    if (left <= 0) {
+      clearInterval(txCountdownTimer);
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+  }, 1000);
+}
+
+function completeTransfer(amount) {
+  if (txCountdownTimer) clearInterval(txCountdownTimer);
+  setPayStep(4);
+  document.getElementById('transfer-step-decision').style.display = 'none';
+  document.getElementById('transfer-step-success').style.display  = 'block';
+  const recipient = document.getElementById('tx-recipient')?.value || 'Recipient';
+  document.getElementById('tx-succ-to').textContent    = recipient;
+  document.getElementById('tx-succ-amt').textContent   = '₹' + amount.toLocaleString('en-IN');
+  document.getElementById('tx-succ-score').textContent = 'LOW — Transfer Safe';
+  document.getElementById('tx-success-msg').textContent =
+    `₹${amount.toLocaleString('en-IN')} sent to ${recipient} successfully. Verified by AI Fraud Shield.`;
+  // Add to transactions
+  USER.transactions = USER.transactions || [];
+  USER.transactions.unshift({ type:'debit', label: 'Transfer to ' + recipient, amount });
+  saveUser();
+}
+
+function resetTransfer() {
+  if (txCountdownTimer) clearInterval(txCountdownTimer);
+  if (txScanInterval)   clearInterval(txScanInterval);
+  setPayStep(1);
+  document.getElementById('transfer-step-form').style.display    = 'block';
+  document.getElementById('transfer-step-decision').style.display = 'none';
+  document.getElementById('transfer-step-success').style.display  = 'none';
+  document.getElementById('pin-card').style.display = 'none';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-recipient').value = '';
+  updateAmountPreview();
+  updateRecipientPreview();
+  ['pin1','pin2','pin3','pin4'].forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
+}
+
+// ── PATCH populateAppFromUser to add v2.0 features ──
+const _origPopulate = populateAppFromUser;
+function populateAppFromUser() {
+  _origPopulate();
+  // Bank card
+  populateBankCard();
+  // Transfer page bank card
+  const bcName = document.getElementById('bc-name');
+  const bcBal  = document.getElementById('bc-balance');
+  if (bcName) bcName.textContent = USER.name || '—';
+  const bal = (USER.current_savings||0) + (USER.investments_value||0);
+  if (bcBal) animateCounter(bcBal, bal);
+  // Activity feed
+  loadActivityFeed();
+  // Spending intel
+  renderSpendingIntel(document.getElementById('dash-spending-intel'));
+  // Record login time for speed check
+  window._loginTime = Date.now();
+}
+
+// ── PATCH switchPage for transfer ──
+const _origSwitchPage = switchPage;
+function switchPage(name, navEl) {
+  _origSwitchPage(name, navEl);
+  if (name === 'transfer') {
+    populateBankCard();
+    const bcName = document.getElementById('bc-name');
+    if (bcName) bcName.textContent = USER.name || '—';
+    const bcBal = document.getElementById('bc-balance');
+    const bal = (USER.current_savings||0) + (USER.investments_value||0);
+    if (bcBal) animateCounter(bcBal, bal);
+    resetTransfer();
+  }
+  if (name === 'dashboard') {
+    loadActivityFeed();
+    populateBankCard();
+  }
+}
+
+// ══════════════════════════════════════════════════
+
+function verifyOTP() {
+  const val = document.getElementById('otp-input').value;
+  if (val === "123456") {
+    document.getElementById('otp-modal').style.display = 'none';
+    if (pendingInvestment) pendingInvestment();
+    pendingInvestment = null;
+  } else {
+    alert("Invalid Security Code. Please try again.");
+  }
+}
+
+</script>
+<div id="why-tooltip" style="
+  position: fixed;
+  background: #1e293b;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 260px;
+  display: none;
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+"></div>
+
+<div id="otp-modal" class="otp-modal">
+  <div class="otp-box">
+    <div style="font-size:40px; margin-bottom:16px;">🔐</div>
+    <h3>Secure Verification</h3>
+    <p>A one-time passcode has been sent to your registered mobile number for this high-value action.</p>
+    <input type="text" id="otp-input" class="otp-input-field" placeholder="••••••" maxlength="6" />
+    <button class="otp-btn" onclick="verifyOTP()">Verify & Confirm</button>
+    <div style="margin-top:16px; font-size:11px; color:var(--text-muted);">
+      Didn't receive it? <span style="color:var(--teal); cursor:pointer;">Resend OTP</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
