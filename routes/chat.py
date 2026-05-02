@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from prompts.wealth_coach import build_system_prompt
 from routes.user_history import init_login_time, USER_HISTORY
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key) if api_key else None
 router = APIRouter()
 
 

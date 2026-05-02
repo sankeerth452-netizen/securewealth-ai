@@ -14,7 +14,8 @@ from database import get_db
 from models import RiskAuditLog
 from routes.user_history import USER_HISTORY
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key) if api_key else None
 router = APIRouter()
 
 # -----------------------------

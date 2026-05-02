@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from routes.user_history import USER_HISTORY
 from routes.risk import audit_log
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key) if api_key else None
 router = APIRouter()
 
 

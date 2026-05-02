@@ -7,7 +7,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Dict
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key) if api_key else None
 router = APIRouter()
 
 

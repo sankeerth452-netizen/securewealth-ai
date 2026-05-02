@@ -48,14 +48,31 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://securewealth-ai.vercel.app",
+        "http://localhost:3000",
         "http://localhost:5000",
         "http://127.0.0.1:5000",
         FRONTEND_URL,
     ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,
 )
+
+import time
+from fastapi import Request
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        print(f"[REQ] {request.method} {request.url.path} - {response.status_code} ({process_time:.3f}s)")
+        return response
+    except Exception as e:
+        print(f"[ERR] API Failure on {request.method} {request.url.path}: {str(e)}")
+        raise
 
 
 # ----------------------------
@@ -101,9 +118,9 @@ async def health():
             ))
             tables_ok = r.scalar()
     return {
-        "status": "healthy",
-        "db": "connected" if db_ok else "offline",
-        "tables_created": tables_ok,
+        "status": "ok",
+        "db": "connected" if db_ok else "disconnected",
+        "tables": tables_ok,
         "agents": 7,
         "version": "3.2"
     }
