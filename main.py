@@ -1,6 +1,7 @@
 # PROJECT: SecureWealth Twin | v3.2
 import os
 import time
+import asyncpg
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
@@ -10,41 +11,46 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 
 # Import database and models explicitly
-from database import create_all_tables, get_db, check_db_connection
-import models # Ensures all models are registered
-from models import * # Explicitly compliant with Step 7
+from database import create_all_tables, get_db, check_db_connection, engine
+import models
+from models import *
 
 from routes import (
     chat, risk, simulate,
-    aggregator, networth, profile, execution
+    aggregator, networth, profile, execution,
+    transactions, goals
 )
 from routes.auth import router as auth_router
-from routes.transactions import router as transactions_router
-from routes.goals import router as goals_router
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://securewealth-ai.vercel.app")
 
 # ----------------------------
-# LIFESPAN (Startup/Shutdown)
+# STEP 4: LIFESPAN (Startup/Shutdown)
 # ----------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 SecureWealth Twin API starting...")
     
-    # ==== DEBUG DATABASE URL ====
+    # STEP 5: Clear logging
     db_url = os.getenv("DATABASE_URL", "")
     print("==== DEBUG DATABASE URL ====")
     if db_url:
-        # show only safe preview (avoid leaking password)
-        safe_preview = db_url.split("@")[0] + "@***"
-        print(safe_preview)
+        # show only safe preview
+        print(f"URL Provided: {db_url[:40]}...")
     else:
         print("DATABASE_URL is NOT SET")
     print("============================")
     
+    # Create tables
     await create_all_tables()
+    
+    # Verify connection
     db_ok = await check_db_connection()
-    print(f"Startup DB Check: {'✅ SUCCESS' if db_ok else '❌ FAILED'}")
+    if db_ok:
+        print("✅ Database connection verified successfully.")
+    else:
+        print("❌ Database connection FAILED.")
+    
     yield
 
 # ----------------------------
@@ -89,6 +95,44 @@ async def log_requests(request: Request, call_next):
         raise
 
 # ----------------------------
+# STEP 1: DEBUG ENDPOINTS
+# ----------------------------
+
+@app.get("/debug/env")
+async def debug_env():
+    url = os.getenv("DATABASE_URL")
+    return {
+        "exists": url is not None,
+        "preview": url[:50] + "..." if url else None
+    }
+
+@app.get("/debug/url")
+async def debug_url():
+    url = os.getenv("DATABASE_URL", "")
+    from database import DATABASE_URL as fixed_url
+    return {
+        "raw_starts_with_postgresql": url.startswith("postgresql"),
+        "fixed_has_asyncpg": "+asyncpg" in fixed_url,
+        "fixed_has_supabase_host": "supabase.co" in fixed_url,
+        "fixed_has_port": ":5432" in fixed_url,
+        "fixed_preview": fixed_url[:60] + "..."
+    }
+
+@app.get("/debug/raw-db")
+async def raw_db():
+    from database import DATABASE_URL as fixed_url
+    try:
+        # We need to strip the +asyncpg for the raw asyncpg driver if it doesn't support it
+        # But actually asyncpg uses postgresql:// or postgres://
+        raw_url = fixed_url.replace("+asyncpg", "")
+        conn = await asyncpg.connect(raw_url)
+        await conn.execute("SELECT 1")
+        await conn.close()
+        return {"connected": True}
+    except Exception as e:
+        return {"connected": False, "error": str(e)}
+
+# ----------------------------
 # ROUTES
 # ----------------------------
 app.include_router(auth_router,       prefix="/api",    tags=["Auth"])
@@ -99,11 +143,11 @@ app.include_router(networth.router,   prefix="/api/ai", tags=["Net Worth"])
 app.include_router(profile.router,    prefix="/api/ai", tags=["Profile"])
 app.include_router(risk.router,       prefix="/api",    tags=["Risk Engine"])
 app.include_router(execution.router,  prefix="/api",    tags=["Execution Engine"])
-app.include_router(transactions_router, prefix="/api",  tags=["Transactions"])
-app.include_router(goals_router,        prefix="/api",  tags=["Goals"])
+app.include_router(transactions.router, prefix="/api",  tags=["Transactions"])
+app.include_router(goals.router,        prefix="/api",  tags=["Goals"])
 
 # ----------------------------
-# ROOT & DEBUG
+# ROOT & HEALTH
 # ----------------------------
 @app.get("/")
 def root():
@@ -113,23 +157,13 @@ def root():
         "db": "PostgreSQL via Supabase"
     }
 
-@app.get("/debug-db")
-async def debug_db():
-    db_url = os.getenv("DATABASE_URL")
-    return {
-        "has_db_url": db_url is not None,
-        "preview": db_url[:30] if db_url else None,
-        "fixed_format": db_url.replace("postgres://", "postgresql+asyncpg://")[:40] if db_url else None
-    }
-
 @app.get("/health")
 async def health():
     db_ok = await check_db_connection()
     tables_exist = False
     if db_ok:
-        from database import AsyncSessionLocal
-        async with AsyncSessionLocal() as s:
-            r = await s.execute(text(
+        async with engine.connect() as conn:
+            r = await conn.execute(text(
                 "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='users')"
             ))
             tables_exist = r.scalar()
@@ -138,30 +172,3 @@ async def health():
         "db_connected": db_ok,
         "tables_exist": tables_exist
     }
-
-# ----------------------------
-# USER SUMMARY ENDPOINT (Live Dashboard)
-# ----------------------------
-@app.get("/api/ai/user-summary")
-async def user_summary(user_id: str, db: AsyncSession = Depends(get_db)):
-    if not db:
-        return {"error": "DB offline"}
-    try:
-        from uuid import UUID
-        uid = UUID(user_id)
-        acc_result = await db.execute(select(Account).where(Account.user_id == uid))
-        account = acc_result.scalar_one_or_none()
-        if not account: return {"error": "Account not found"}
-        
-        # Monthly totals
-        now = datetime.utcnow()
-        month_start = now.replace(day=1, hour=0, minute=0, second=0)
-        sent_res = await db.execute(select(func.sum(Transaction.amount)).where(Transaction.sender_id == account.id, Transaction.timestamp >= month_start))
-        
-        return {
-            "account_number": account.account_number,
-            "balance": float(account.balance),
-            "total_sent_this_month": float(sent_res.scalar() or 0)
-        }
-    except Exception as e:
-        return {"error": str(e)}
