@@ -1,16 +1,18 @@
 # PROJECT: SecureWealth Twin | v3.2
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 
+# Import database and models explicitly
 from database import create_all_tables, get_db, check_db_connection
-from models import Account, Transaction, RiskAuditLog
-import models  # ensures all models are registered with Base
+import models # Ensures all models are registered
+from models import * # Explicitly compliant with Step 7
 
 from routes import (
     chat, risk, simulate,
@@ -18,19 +20,21 @@ from routes import (
 )
 from routes.auth import router as auth_router
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://securewealth-ai.vercel.app")
 
 # ----------------------------
-# LIFESPAN (replaces @on_event)
+# LIFESPAN (Startup/Shutdown)
 # ----------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 SecureWealth Twin API starting...")
+    has_url = os.getenv("DATABASE_URL") is not None
+    print(f"DATABASE_URL Configured: {'✅' if has_url else '❌ MISSING'}")
+    
     await create_all_tables()
     db_ok = await check_db_connection()
-    print(f"[DB] Status: {'✅ connected' if db_ok else '❌ offline — degraded mode'}")
+    print(f"Startup DB Check: {'✅ SUCCESS' if db_ok else '❌ FAILED'}")
     yield
-
 
 # ----------------------------
 # APP INIT
@@ -40,7 +44,6 @@ app = FastAPI(
     version="3.2",
     lifespan=lifespan
 )
-
 
 # ----------------------------
 # CORS
@@ -59,9 +62,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import time
-from fastapi import Request
-
+# ----------------------------
+# LOGGING MIDDLEWARE
+# ----------------------------
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start_time = time.time()
@@ -73,7 +76,6 @@ async def log_requests(request: Request, call_next):
     except Exception as e:
         print(f"[ERR] API Failure on {request.method} {request.url.path}: {str(e)}")
         raise
-
 
 # ----------------------------
 # ROUTES
@@ -87,138 +89,67 @@ app.include_router(profile.router,    prefix="/api/ai", tags=["Profile"])
 app.include_router(risk.router,       prefix="/api",    tags=["Risk Engine"])
 app.include_router(execution.router,  prefix="/api",    tags=["Execution Engine"])
 
-
 # ----------------------------
-# ROOT
+# ROOT & DEBUG
 # ----------------------------
 @app.get("/")
 def root():
     return {
         "status": "SecureWealth Twin AI is running ✅",
         "version": "3.2",
-        "agents": 7,
-        "db": "PostgreSQL via Supabase",
-        "auth": "JWT (HS256)",
+        "db": "PostgreSQL via Supabase"
     }
 
+@app.get("/debug-db")
+async def debug_db():
+    db_url = os.getenv("DATABASE_URL")
+    return {
+        "has_db_url": db_url is not None,
+        "preview": db_url[:30] if db_url else None,
+        "fixed_format": db_url.replace("postgres://", "postgresql+asyncpg://")[:40] if db_url else None
+    }
 
-# ----------------------------
-# HEALTH CHECK (with DB)
-# ----------------------------
 @app.get("/health")
 async def health():
     db_ok = await check_db_connection()
-    tables_ok = False
+    tables_exist = False
     if db_ok:
         from database import AsyncSessionLocal
-        from sqlalchemy import text
         async with AsyncSessionLocal() as s:
             r = await s.execute(text(
                 "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name='users')"
             ))
-            tables_ok = r.scalar()
+            tables_exist = r.scalar()
+    
     return {
         "status": "ok",
-        "db": "connected" if db_ok else "disconnected",
-        "tables": tables_ok,
-        "agents": 7,
-        "version": "3.2"
+        "db_connected": db_ok,
+        "tables_exist": tables_exist
     }
 
-
 # ----------------------------
-# USER SUMMARY ENDPOINT
+# USER SUMMARY ENDPOINT (Live Dashboard)
 # ----------------------------
 @app.get("/api/ai/user-summary")
 async def user_summary(user_id: str, db: AsyncSession = Depends(get_db)):
-    """
-    Returns live dashboard data for a user from the database.
-    Powers the real-time dashboard after login.
-    """
     if not db:
         return {"error": "DB offline"}
     try:
         from uuid import UUID
         uid = UUID(user_id)
-
-        # Fetch account
-        acc_result = await db.execute(
-            select(Account).where(Account.user_id == uid)
-        )
+        acc_result = await db.execute(select(Account).where(Account.user_id == uid))
         account = acc_result.scalar_one_or_none()
-        if not account:
-            return {"error": "Account not found"}
-
-        balance = float(account.balance)
-        acc_id  = account.id
-
-        # Last 5 transactions
-        tx_result = await db.execute(
-            select(Transaction)
-            .where(Transaction.sender_id == acc_id)
-            .order_by(Transaction.timestamp.desc())
-            .limit(5)
-        )
-        last_txns = [{
-            "amount": float(t.amount),
-            "note":   t.note,
-            "status": t.status,
-            "decision": t.risk_decision or "ALLOW",
-            "timestamp": t.timestamp.isoformat()
-        } for t in tx_result.scalars().all()]
-
-        # This month totals
-        now         = datetime.utcnow()
+        if not account: return {"error": "Account not found"}
+        
+        # Monthly totals
+        now = datetime.utcnow()
         month_start = now.replace(day=1, hour=0, minute=0, second=0)
-
-        sent_result = await db.execute(
-            select(func.sum(Transaction.amount))
-            .where(Transaction.sender_id == acc_id)
-            .where(Transaction.timestamp >= month_start)
-        )
-        total_sent = float(sent_result.scalar() or 0)
-
-        recv_result = await db.execute(
-            select(func.sum(Transaction.amount))
-            .where(Transaction.receiver_id == acc_id)
-            .where(Transaction.timestamp >= month_start)
-        )
-        total_received = float(recv_result.scalar() or 0)
-
-        # Risk events this week
-        week_start = now - timedelta(days=7)
-        risk_result = await db.execute(
-            select(func.count(RiskAuditLog.id))
-            .where(RiskAuditLog.account_id == acc_id)
-            .where(RiskAuditLog.timestamp >= week_start)
-            .where(RiskAuditLog.decision != "ALLOW")
-        )
-        risk_events = int(risk_result.scalar() or 0)
-
+        sent_res = await db.execute(select(func.sum(Transaction.amount)).where(Transaction.sender_id == account.id, Transaction.timestamp >= month_start))
+        
         return {
             "account_number": account.account_number,
-            "balance":         balance,
-            "last_transactions": last_txns,
-            "total_sent_this_month":     total_sent,
-            "total_received_this_month": total_received,
-            "risk_events_this_week":     risk_events
+            "balance": float(account.balance),
+            "total_sent_this_month": float(sent_res.scalar() or 0)
         }
-
     except Exception as e:
         return {"error": str(e)}
-
-
-# ----------------------------
-# LEGACY USER PROFILE (unchanged — keeps frontend working)
-# ----------------------------
-@app.get("/api/user/profile")
-def get_user_profile():
-    return {
-        "name": "Priya",
-        "income": 55000,
-        "goal": "buy a house in 7 years",
-        "risk_appetite": "medium",
-        "current_savings": 120000,
-        "avg_investment": 5000,
-        "investments_value": 60000
-    }

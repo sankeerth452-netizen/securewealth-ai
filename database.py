@@ -1,4 +1,5 @@
 import os
+import traceback
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import text
@@ -8,6 +9,7 @@ def get_database_url():
     if not url:
         raise ValueError("CRITICAL ERROR: DATABASE_URL environment variable is missing.")
     
+    # Supabase/PostgreSQL dynamic correction for asyncpg
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif url.startswith("postgresql://"):
@@ -20,11 +22,13 @@ DATABASE_URL = get_database_url()
 try:
     auth_part = DATABASE_URL.split('@')[0]
     host_part = DATABASE_URL.split('@')[1]
-    user_part = auth_part.split(':')[1]
-    masked_url = f"postgresql+asyncpg://{user_part.replace('//', '')}:***@{host_part}"
-    print(f"[DB INIT] Using DATABASE_URL: {masked_url}")
+    # Handle both postgresql+asyncpg://user:pass and postgresql://user:pass
+    protocol_user = auth_part.split('://')[1]
+    user = protocol_user.split(':')[0]
+    masked_url = f"postgresql+asyncpg://{user}:****@{host_part}"
+    print(f"DB URL: {masked_url}")
 except Exception:
-    print("[DB INIT] Using DATABASE_URL: (masked)")
+    print("DB URL: (exists, masked)")
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -52,18 +56,21 @@ async def get_db():
 async def create_all_tables():
     try:
         async with engine.begin() as conn:
-            from models import User, Account, Transaction, Goal, RiskAuditLog  # noqa
+            # Crucial: Import all models so they register with Base.metadata
+            from models import User, Account, Transaction, Goal, RiskAuditLog # noqa
             await conn.run_sync(Base.metadata.create_all)
-        print("[DB SETUP] ✅ All tables created or verified successfully.")
+        print("✅ DB TABLES VERIFIED/CREATED")
     except Exception as e:
-        print(f"[DB SETUP ERROR] ❌ Table creation failed: {e}")
+        print(f"❌ DB TABLE CREATION FAILED: {e}")
+        traceback.print_exc()
 
 async def check_db_connection():
     try:
         async with engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
-        print("[DB STATUS] ✅ Database connection successful.")
+        print("✅ DB CONNECTED SUCCESSFULLY")
         return True
     except Exception as e:
-        print("DB CONNECTION ERROR:", e)
+        print("❌ DB CONNECTION FAILED")
+        traceback.print_exc()
         return False
