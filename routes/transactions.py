@@ -1,6 +1,6 @@
-# PROJECT: SecureWealth Twin | v3.2-production
+# PROJECT: SecureWealth Twin | v3.3
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import Optional
@@ -19,33 +19,27 @@ class TransactionCreate(BaseModel):
     note: Optional[str] = "Transfer"
 
 @router.post("/transactions")
-async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends(get_db)):
+def create_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
     try:
         print("🔥 ENDPOINT HIT: /api/transactions")
         print("📥 Incoming data:", data)
 
-        # Map string IDs to UUIDs if provided
-        s_id = uuid.UUID(data.sender_id) if data.sender_id else None
-        r_id = uuid.UUID(data.receiver_id) if data.receiver_id else None
-
         new_txn = Transaction(
-            sender_id=s_id,
-            receiver_id=r_id,
+            sender_id=data.sender_id,
+            receiver_id=data.receiver_id,
             amount=Decimal(str(data.amount)),
             note=data.note,
             status="completed"
         )
 
         print("🛠 Creating DB object")
-
         db.add(new_txn)
 
         print("💾 Committing...")
-        await db.commit()
+        db.commit()
 
         print("✅ Commit done")
-
-        await db.refresh(new_txn)
+        db.refresh(new_txn)
 
         print("🎉 Insert success:", new_txn.id)
 
@@ -57,5 +51,6 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
     except Exception as e:
         print("❌ INSERT FAILED:", str(e))
         traceback.print_exc()
-        await db.rollback()
+        if db:
+            db.rollback()
         raise HTTPException(status_code=500, detail=str(e))

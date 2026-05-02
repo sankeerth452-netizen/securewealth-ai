@@ -1,4 +1,4 @@
-# PROJECT: SecureWealth Twin | v3.2-production
+# PROJECT: SecureWealth Twin | v3.3
 import os
 import uuid
 import random
@@ -11,7 +11,7 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from database import get_db
@@ -65,9 +65,9 @@ def generate_account_number() -> str:
 # ----------------------------
 # JWT DEPENDENCY
 # ----------------------------
-async def get_current_user(
+def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ) -> User:
     credentials_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -84,8 +84,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exc
 
-    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
-    user = result.scalar_one_or_none()
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise credentials_exc
     return user
@@ -95,12 +94,12 @@ async def get_current_user(
 # POST /api/auth/register
 # ----------------------------
 @router.post("/auth/register")
-async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+def register(req: RegisterRequest, db: Session = Depends(get_db)):
     print("Incoming data:", req.email)
     
     # Check duplicate email
-    existing = await db.execute(select(User).where(User.email == req.email))
-    if existing.scalar_one_or_none():
+    existing = db.query(User).filter(User.email == req.email).first()
+    if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     print("Writing to DB (User)...")
@@ -112,8 +111,8 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             password_hash=hash_password(req.password)
         )
         db.add(user)
-        await db.commit()
-        await db.refresh(user)
+        db.commit()
+        db.refresh(user)
 
         print("Writing to DB (Account)...")
         # Create account with ₹1,00,000 starting balance
@@ -123,12 +122,12 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             balance=100000.00
         )
         db.add(account)
-        await db.commit()
-        await db.refresh(account)
+        db.commit()
+        db.refresh(account)
         
         print(f"[DB DEBUG] ✅ User and Account created: {user.email}")
     except Exception as e:
-        await db.rollback()
+        db.rollback()
         print("DB WRITE ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -147,16 +146,14 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 # POST /api/auth/login
 # ----------------------------
 @router.post("/auth/login")
-async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == req.email))
-    user = result.scalar_one_or_none()
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
 
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # Fetch account
-    acc_result = await db.execute(select(Account).where(Account.user_id == user.id))
-    account = acc_result.scalar_one_or_none()
+    account = db.query(Account).filter(Account.user_id == user.id).first()
 
     token = create_jwt(str(user.id), user.email)
     return {
@@ -173,16 +170,16 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
 # TEST ROUTE
 # ----------------------------
 @router.get("/test-db-write")
-async def test_db_write(db: AsyncSession = Depends(get_db)):
+def test_db_write(db: Session = Depends(get_db)):
     print("Testing DB write...")
     try:
         test_email = f"test_{uuid.uuid4().hex[:6]}@test.com"
         test = User(name="Test Bot", email=test_email, password_hash="123")
         db.add(test)
-        await db.commit()
-        await db.refresh(test)
+        db.commit()
+        db.refresh(test)
         return {"message": "inserted", "email": test_email}
     except Exception as e:
-        await db.rollback()
+        db.rollback()
         print("DB WRITE ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))

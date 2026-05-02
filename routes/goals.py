@@ -1,6 +1,6 @@
-# PROJECT: SecureWealth Twin | v3.2-production
+# PROJECT: SecureWealth Twin | v3.3
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import Optional
@@ -19,10 +19,10 @@ class GoalCreate(BaseModel):
     target_date: Optional[datetime] = None
 
 @router.post("/goals")
-async def create_goal(
+def create_goal(
     req: GoalCreate, 
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     print("Incoming data:", req.dict())
     print("Writing to DB...")
@@ -37,8 +37,8 @@ async def create_goal(
         )
         
         db.add(new_goal)
-        await db.commit()
-        await db.refresh(new_goal)
+        db.commit()
+        db.refresh(new_goal)
         
         print(f"[DB DEBUG] ✅ Goal created: {new_goal.name}")
         return {
@@ -47,6 +47,7 @@ async def create_goal(
             "status": "success"
         }
     except Exception as e:
-        await db.rollback()
+        if db:
+            db.rollback()
         print("DB WRITE ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))

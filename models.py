@@ -1,75 +1,89 @@
-# PROJECT: SecureWealth Twin | v3.0-production
+# PROJECT: SecureWealth Twin | v3.3
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, ForeignKey
+from decimal import Decimal
+from sqlalchemy import String, Numeric, DateTime, Integer, ForeignKey, JSON
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.types import JSON
-from sqlalchemy.orm import relationship
 from database import Base
+
+
+def new_uuid():
+    return str(uuid.uuid4())
+
 
 class User(Base):
     __tablename__ = "users"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(100))
-    email = Column(String(150), unique=True, nullable=False)
-    password_hash = Column(String(200))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    financial_profile = Column(JSON, nullable=True)
-    archetype = Column(JSON, nullable=True)
-    
-    accounts = relationship("Account", back_populates="user")
-    goals = relationship("Goal", back_populates="user")
+
+    id:               Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    name:             Mapped[str] = mapped_column(String(100), nullable=False)
+    email:            Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    password_hash:    Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at:       Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    financial_profile: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    archetype:        Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    accounts: Mapped[list["Account"]] = relationship("Account", back_populates="user")
+    goals:    Mapped[list["Goal"]]    = relationship("Goal", back_populates="user")
+
 
 class Account(Base):
     __tablename__ = "accounts"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    account_number = Column(String(20), unique=True)
-    balance = Column(Numeric(15, 2), default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="accounts")
+
+    id:             Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    user_id:        Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    account_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    balance:        Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("100000.00"))
+    created_at:     Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User"] = relationship("User", back_populates="accounts")
+    sent_transactions:     Mapped[list["Transaction"]] = relationship("Transaction", foreign_keys="Transaction.sender_id",   back_populates="sender")
+    received_transactions: Mapped[list["Transaction"]] = relationship("Transaction", foreign_keys="Transaction.receiver_id", back_populates="receiver")
+
 
 class Transaction(Base):
     __tablename__ = "transactions"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sender_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"))
-    receiver_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
-    amount = Column(Numeric(15, 2))
-    note = Column(String(200), default='')
-    status = Column(String(20), default='completed')
-    risk_score = Column(Integer, nullable=True)
-    risk_decision = Column(String(10), nullable=True)
-    risk_signals = Column(JSON, nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    id:            Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    sender_id:     Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), nullable=False)
+    receiver_id:   Mapped[str | None] = mapped_column(String(36), ForeignKey("accounts.id"), nullable=True)
+    amount:        Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    note:          Mapped[str] = mapped_column(String(200), default="")
+    status:        Mapped[str] = mapped_column(String(20), default="completed")
+    risk_score:    Mapped[int | None] = mapped_column(Integer, nullable=True)
+    risk_decision: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    risk_signals:  Mapped[list | None] = mapped_column(JSON, nullable=True)
+    timestamp:     Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    sender:   Mapped["Account"] = relationship("Account", foreign_keys=[sender_id],   back_populates="sent_transactions")
+    receiver: Mapped["Account"] = relationship("Account", foreign_keys=[receiver_id], back_populates="received_transactions")
+
 
 class Goal(Base):
     __tablename__ = "goals"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    name = Column(String(100))
-    target_amount = Column(Numeric(15, 2))
-    current_amount = Column(Numeric(15, 2), default=0)
-    target_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    user = relationship("User", back_populates="goals")
+
+    id:             Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    user_id:        Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    name:           Mapped[str] = mapped_column(String(100), nullable=False)
+    target_amount:  Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    current_amount: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0.00"))
+    target_date:    Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at:     Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User"] = relationship("User", back_populates="goals")
+
 
 class RiskAuditLog(Base):
     __tablename__ = "risk_audit_log"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
-    action_type = Column(String(50))
-    amount = Column(Numeric(15, 2))
-    risk_score = Column(Integer)
-    level = Column(String(10))
-    decision = Column(String(10))
-    reason = Column(String(500))
-    signals = Column(JSON)
-    trust_pyramid = Column(JSON)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    id:           Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    account_id:   Mapped[str | None] = mapped_column(String(36), nullable=True)
+    action_type:  Mapped[str] = mapped_column(String(50), nullable=False)
+    amount:       Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))
+    risk_score:   Mapped[int] = mapped_column(Integer, default=0)
+    level:        Mapped[str] = mapped_column(String(10), default="")
+    decision:     Mapped[str] = mapped_column(String(10), default="")
+    reason:       Mapped[str] = mapped_column(String(500), default="")
+    signals:      Mapped[list | None] = mapped_column(JSON, nullable=True)
+    trust_pyramid: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    timestamp:    Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
