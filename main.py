@@ -30,8 +30,17 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://securewealth-ai.vercel.app")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 SecureWealth Twin API starting...")
-    has_url = os.getenv("DATABASE_URL") is not None
-    print(f"DATABASE_URL Configured: {'✅' if has_url else '❌ MISSING'}")
+    
+    # ==== DEBUG DATABASE URL ====
+    db_url = os.getenv("DATABASE_URL", "")
+    print("==== DEBUG DATABASE URL ====")
+    if db_url:
+        # show only safe preview (avoid leaking password)
+        safe_preview = db_url.split("@")[0] + "@***"
+        print(safe_preview)
+    else:
+        print("DATABASE_URL is NOT SET")
+    print("============================")
     
     await create_all_tables()
     db_ok = await check_db_connection()
