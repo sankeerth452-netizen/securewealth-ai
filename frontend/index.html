@@ -2655,54 +2655,7 @@ input[type=range]::-webkit-slider-thumb:hover {
 
 </div><!-- end #app -->
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-
-  // Firebase Config (Placeholder - Replace with your actual config)
-  const firebaseConfig = {
-    apiKey: "AIzaSyDummyKey_ReplaceMe",
-    authDomain: "securewealth-ai.firebaseapp.com",
-    projectId: "securewealth-ai",
-    storageBucket: "securewealth-ai.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef123456"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  console.log("Cloud sync active: Firebase initialized");
-
-  // Helper functions exposed to global scope
-  window.saveToCloud = async function(userId, data) {
-    try {
-      await setDoc(doc(db, "users", userId), data);
-      console.log("Cloud sync active: Saved to cloud");
-    } catch (e) {
-      console.warn("Cloud save failed, fallback to local only", e);
-    }
-  };
-
-  window.loadFromCloud = async function(userId) {
-    try {
-      const docSnap = await getDoc(doc(db, "users", userId));
-      if (docSnap.exists()) {
-        console.log("Cloud sync active: Loaded from cloud");
-        return docSnap.data();
-      }
-    } catch (e) {
-      console.warn("Cloud load failed, using local fallback", e);
-    }
-    return null;
-  };
-
-  // Trigger app initialization after Firebase is ready
-  if (typeof initApp === 'function') {
-    initApp();
-  }
-</script>
+<!-- Cloud Sync removed to focus on Supabase + FastAPI -->
 
 <script>
 // ── USER DATA (mutable, persisted in localStorage) ──
@@ -2746,11 +2699,6 @@ if (!USER.transactions) {
 
 function saveUser() {
   localStorage.setItem('swt_user', JSON.stringify(USER));
-  
-  // ADD THIS: Save to Cloud
-  if (window.saveToCloud) {
-    window.saveToCloud("demoUser", USER);
-  }
 }
 
 const API = "https://securewealth-backend.onrender.com";
@@ -2903,141 +2851,54 @@ document.addEventListener('click', function(e) {
   }
 });
 
-function populateAppFromUser() {
-  const initials = (USER.name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+async function populateAppFromUser() {
+  // Prevent recursion / multiple concurrent loads
+  if (window._populatingApp) return;
+  window._populatingApp = true;
 
-  // Sidebar
-  document.getElementById('sidebar-avatar').textContent = initials;
-  document.getElementById('sidebar-name').textContent   = USER.name;
-  document.getElementById('sidebar-role').textContent   = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1) + ' Investor';
+  try {
+    const initials = (USER.name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
-  // Dashboard
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dash-greeting').textContent = `${greeting}, ${USER.name.split(' ')[0]} 👋`;
+    // Sidebar
+    const sidebarAvatar = document.getElementById('sidebar-avatar');
+    const sidebarName = document.getElementById('sidebar-name');
+    const sidebarRole = document.getElementById('sidebar-role');
+    if (sidebarAvatar) sidebarAvatar.textContent = initials;
+    if (sidebarName) sidebarName.textContent = USER.name;
+    if (sidebarRole) sidebarRole.textContent = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1) + ' Investor';
 
-  // Chat sidebar profile
-  document.getElementById('chat-profile-income').textContent = '₹' + USER.income.toLocaleString('en-IN');
-  document.getElementById('chat-profile-risk').textContent   = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1);
-  document.getElementById('chat-profile-goal').textContent   = USER.goal;
-
-  // Profile page
-  document.getElementById('prof-avatar').textContent  = initials;
-  document.getElementById('prof-name').textContent    = USER.name;
-  document.getElementById('prof-role').textContent    = USER.investment_experience.charAt(0).toUpperCase() + USER.investment_experience.slice(1) + ' Investor';
-  document.getElementById('prof-age').textContent     = USER.age + ' years';
-  document.getElementById('prof-income').textContent  = '₹' + USER.income.toLocaleString('en-IN');
-  document.getElementById('prof-expenses').textContent = '₹' + USER.monthly_expenses.toLocaleString('en-IN');
-  document.getElementById('prof-goal').textContent    = USER.goal;
-  document.getElementById('prof-timeline').textContent = USER.timeline + ' years';
-  document.getElementById('prof-risk').textContent    = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1);
-  document.getElementById('prof-badge-risk').textContent = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1) + ' Risk';
-  document.getElementById('prof-badge-exp').textContent  = USER.investment_experience.charAt(0).toUpperCase() + USER.investment_experience.slice(1) + ' Investor';
-
-  // Personalise welcome message
-  document.getElementById('chat-welcome-msg').textContent =
-    `Hi ${USER.name.split(' ')[0]}! 👋 I'm your SecureWealth Coach. I know your goal is to ${USER.goal} — let's make it happen. What would you like to explore today?`;
-
-  const houseSaved = (USER.current_savings || 0) * 0.5;
-  const emergencySaved = (USER.current_savings || 0) * 0.3;
-  const vacationSaved = (USER.current_savings || 0) * 0.2;
-
-  const goals = [
-    {
-      name: "🏠 Buy a House",
-      target: USER.income * 60,
-      current: houseSaved
-    },
-    {
-      name: "📚 Emergency Fund",
-      target: USER.income * 6,
-      current: emergencySaved
-    },
-    {
-      name: "✈️ Vacation Fund",
-      target: USER.income * 2,
-      current: vacationSaved
+    // Dashboard Greeting
+    const dashGreeting = document.getElementById('dash-greeting');
+    if (dashGreeting) {
+        const hour = new Date().getHours();
+        const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+        dashGreeting.textContent = `${greeting}, ${USER.name.split(' ')[0]} 👋`;
     }
-  ];
 
-  const goalsHTML = goals.map(g => {
-    const percent = Math.min((g.current / g.target) * 100, 100).toFixed(0);
+    // Update UI with real data if authenticated
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+    if (token) {
+        const res = await safeFetch('/api/auth/me', { method: 'GET' });
+        if (res && !res.error) {
+            USER.name = res.name || USER.name;
+            USER.income = res.balance ? (res.balance / 10) : USER.income; // Just a placeholder sync
+        }
+    }
 
-    return `
-      <div class="goal-item">
-        <div class="goal-header">
-          <div class="goal-name">${g.name}</div>
-          <div class="goal-pct">${percent}%</div>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
-        <div class="goal-meta">
-          <span>₹${g.current.toLocaleString('en-IN')} saved</span>
-          <span>₹${g.target.toLocaleString('en-IN')} target</span>
-        </div>
-      </div>
-    `;
-  }).join("");
+    // Refresh child components
+    updateChart();
+    loadNetworth();
+    loadDashboard();
+    loadRiskAlerts();
+    renderTransactions();
+    populateBankCard();
+    loadActivityFeed();
 
-  document.getElementById("dash-goals").innerHTML = goalsHTML;
-
-  const insights = [];
-  const savings = USER.income - USER.monthly_expenses;
-  const savingsRatePct = USER.income > 0 ? (savings / USER.income) : 0;
-  const rateDisplay = (savingsRatePct * 100).toFixed(0);
-
-  if (savingsRatePct < 0.20) {
-    insights.push({
-      text: "⚠️ Your savings rate is low. Try increasing it to 20%.",
-      why: `Based on your ₹${USER.income.toLocaleString('en-IN')} income and ${rateDisplay}% savings rate, you have ₹${savings.toLocaleString('en-IN')} left monthly. Aiming for 20% builds a safer buffer.`
-    });
-  } else if (savingsRatePct > 0.50) {
-    insights.push({
-      text: "🚀 Great savings discipline! Consider investing more for growth.",
-      why: `You're saving ${rateDisplay}% of your income. Compounding this surplus in equities could accelerate your ${USER.goal} goal.`
-    });
+  } catch (err) {
+    console.error('populateAppFromUser error:', err);
+  } finally {
+    window._populatingApp = false;
   }
-
-  if (USER.risk_appetite === "low") {
-    insights.push({
-      text: "🛡️ You prefer safety. Consider balanced mutual funds.",
-      why: "As a 'Low Risk' investor, balanced funds protect your principal while providing inflation-beating growth."
-    });
-  } else if (USER.risk_appetite === "high") {
-    insights.push({
-      text: "📈 You can explore equities or high-growth investments.",
-      why: "Your 'High Risk' appetite allows you to ride market volatility for significantly higher long-term wealth."
-    });
-  }
-
-  if (USER.income > 100000) {
-    insights.push({
-      text: "💰 You are in a strong earning bracket. Optimize tax-saving investments.",
-      why: `With an income over ₹1L/month, maximizing Section 80C and 80D can save you over ₹45,000 in annual taxes.`
-    });
-  }
-  
-  if (insights.length === 0) {
-    insights.push({
-      text: "💡 You are on a steady path. Keep it up!",
-      why: "Your financial indicators are balanced. Consistency is key to long-term wealth."
-    });
-  }
-
-  document.getElementById("dash-insights").innerHTML =
-    insights.map(i => `
-      <div style="margin-bottom:16px; border-bottom:1px solid var(--navy-border); padding-bottom:16px;">
-        <div style="font-size:13px; color:var(--text-primary); font-weight:500;">
-          ${i.text} ${createWhyTooltip(i.why)}
-        </div>
-        ${buildReasoningPanel()}
-      </div>
-    `).join("");
-
-  updateChart();
-  loadNetworth();
-  loadDashboard();
-  loadRiskAlerts();
-  renderTransactions();
 }
 
 // ── WEALTH CHART (DYNAMIC) ──
@@ -3315,19 +3176,8 @@ function doLogin() {
 
 // ── HYBRID LOADING: try cloud, fallback to local ──
 async function initApp() {
-  console.log("Cloud sync active: Attempting hybrid load...");
+  console.log("App initialization...");
   
-  // 1. Try to load from Cloud
-  if (window.loadFromCloud) {
-    const cloudData = await window.loadFromCloud("demoUser");
-    if (cloudData) {
-      USER = cloudData;
-      // Sync local storage with cloud data
-      localStorage.setItem('swt_user', JSON.stringify(USER));
-    }
-  }
-
-  // 2. If user exists (either from cloud or already in local), skip wizard
   if (localStorage.getItem('swt_user')) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
@@ -3336,10 +3186,8 @@ async function initApp() {
 }
 
 // Fallback for immediate load if module is slow, but module will re-run initApp
-if (localStorage.getItem('swt_user') && !window.loadFromCloud) {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-  populateAppFromUser();
+if (localStorage.getItem('swt_user')) {
+  initApp();
 }
 
 // ── NAVIGATION ──
@@ -4485,25 +4333,10 @@ function resetTransfer() {
   ['pin1','pin2','pin3','pin4'].forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
 }
 
-// ── PATCH populateAppFromUser to add v2.0 features ──
-const _origPopulate = populateAppFromUser;
-function populateAppFromUser() {
-  _origPopulate();
-  // Bank card
-  populateBankCard();
-  // Transfer page bank card
-  const bcName = document.getElementById('bc-name');
-  const bcBal  = document.getElementById('bc-balance');
-  if (bcName) bcName.textContent = USER.name || '—';
-  const bal = (USER.current_savings||0) + (USER.investments_value||0);
-  if (bcBal) animateCounter(bcBal, bal);
-  // Activity feed
-  loadActivityFeed();
-  // Spending intel
-  renderSpendingIntel(document.getElementById('dash-spending-intel'));
-  // Record login time for speed check
-  window._loginTime = Date.now();
-}
+// ── Finalization ──
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+});
 
 // Patch removed to avoid infinite recursion
 

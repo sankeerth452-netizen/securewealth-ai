@@ -1,34 +1,41 @@
-# PROJECT: SecureWealth Twin | v3.4
+# PROJECT: SecureWealth Twin | v3.5
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_all_tables, check_db_connection
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://securewealth-ai.vercel.app")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").rstrip('/')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 SecureWealth Twin API starting...")
-    tables_ok = create_all_tables()       # sync call — no await needed
-    db_ok     = check_db_connection()     # sync call — no await needed
+    tables_ok = create_all_tables()
+    db_ok     = check_db_connection()
     print(f"[DB] Tables: {'✅' if tables_ok else '❌'}  Connection: {'✅' if db_ok else '❌'}")
     yield
     print("SecureWealth Twin shutting down")
 
-app = FastAPI(title="SecureWealth Twin", version="3.4", lifespan=lifespan)
+app = FastAPI(title="SecureWealth Twin", version="3.5", lifespan=lifespan)
+
+# Build allowed origins
+allowed_origins = [
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://localhost:3000",
+    "https://securewealth-ai.vercel.app",
+]
+if FRONTEND_URL:
+    allowed_origins.append(FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5000",
-        "http://127.0.0.1:5000",
-        "https://securewealth-ai.vercel.app",
-        FRONTEND_URL,
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Allow ALL vercel.app subdomains
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # --- Router Inclusions ---
@@ -47,7 +54,7 @@ app.include_router(goals.router,        prefix="/api",     tags=["Goals"])
 
 @app.get("/")
 def root():
-    return {"status": "SecureWealth Twin v3.4 running ✅"}
+    return {"status": "SecureWealth Twin v3.5 running ✅"}
 
 @app.get("/health")
 def health():
@@ -69,5 +76,5 @@ def health():
         "db":             "connected" if db_ok else "offline",
         "tables_created": tables_ok,
         "agents":         7,
-        "version":        "3.4",
+        "version":        "3.5",
     }
