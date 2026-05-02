@@ -122,7 +122,6 @@ async def health():
             tables_exist = r.scalar()
     
     return {
-        "status": "ok",
         "db_connected": db_ok,
         "tables_exist": tables_exist
     }

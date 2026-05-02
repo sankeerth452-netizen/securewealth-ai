@@ -1,35 +1,41 @@
 import os
-import traceback
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+import urllib.parse
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from sqlalchemy import text
 
 def get_database_url():
     url = os.getenv("DATABASE_URL")
     if not url:
-        raise ValueError("CRITICAL ERROR: DATABASE_URL environment variable is missing.")
-    
-    # Supabase/PostgreSQL dynamic correction for asyncpg
+        # Fallback to the exact one requested if env is missing for testing
+        url = "postgresql://postgres.xigafgionuxddugjnhlw:Latheesh1@12345@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres"
+
+    # 1. Fix prefix automatically
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    # 10. Handle special characters in password (URL encode)
+    # The password "Latheesh1@12345" has an @ which breaks URL parsing
+    if "postgresql+asyncpg://" in url:
+        try:
+            # Basic split to isolate credentials and host
+            prefix, rest = url.split("://")
+            auth, host = rest.rsplit("@", 1)
+            user, password = auth.split(":", 1)
+            
+            # Encode password if it contains special chars like @
+            encoded_password = urllib.parse.quote_plus(password)
+            url = f"{prefix}://{user}:{encoded_password}@{host}"
+        except Exception as e:
+            print(f"[DB URL FIX] Warning: Could not auto-encode password: {e}")
+
     return url
 
 DATABASE_URL = get_database_url()
 
-# Mask password for logging
-try:
-    auth_part = DATABASE_URL.split('@')[0]
-    host_part = DATABASE_URL.split('@')[1]
-    # Handle both postgresql+asyncpg://user:pass and postgresql://user:pass
-    protocol_user = auth_part.split('://')[1]
-    user = protocol_user.split(':')[0]
-    masked_url = f"postgresql+asyncpg://{user}:****@{host_part}"
-    print(f"DB URL: {masked_url}")
-except Exception:
-    print("DB URL: (exists, masked)")
-
+# 4. Engine setup with REQUIRED SSL for Supabase
 engine = create_async_engine(
     DATABASE_URL,
     echo=True,
@@ -37,8 +43,9 @@ engine = create_async_engine(
     connect_args={"ssl": "require"}
 )
 
-AsyncSessionLocal = async_sessionmaker(
-    engine,
+# 5. Create async session using sessionmaker
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False
 )
@@ -53,24 +60,25 @@ async def get_db():
         finally:
             await session.close()
 
+# 8. Ensure tables are created on startup
 async def create_all_tables():
     try:
         async with engine.begin() as conn:
-            # Crucial: Import all models so they register with Base.metadata
+            # Crucial: Import models so they register with Base
             from models import User, Account, Transaction, Goal, RiskAuditLog # noqa
             await conn.run_sync(Base.metadata.create_all)
         print("✅ DB TABLES VERIFIED/CREATED")
     except Exception as e:
         print(f"❌ DB TABLE CREATION FAILED: {e}")
-        traceback.print_exc()
 
+# 6. Database connection test function
 async def check_db_connection():
     try:
         async with engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
+            # uses run_sync pattern as requested
+            await conn.run_sync(lambda conn: None)
         print("✅ DB CONNECTED SUCCESSFULLY")
         return True
     except Exception as e:
-        print("❌ DB CONNECTION FAILED")
-        traceback.print_exc()
+        print("DB CONNECTION ERROR:", e)
         return False
