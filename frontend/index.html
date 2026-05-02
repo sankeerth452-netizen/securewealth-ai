@@ -2757,6 +2757,7 @@ const API = "https://securewealth-backend.onrender.com";
 
 // Safe fetch — never silently fails
 async function safeFetch(endpoint, options = {}) {
+    console.log(`[API CALL] 🚀 ${options.method || 'GET'} ${endpoint}`, options.body ? JSON.parse(options.body) : '');
     const url = endpoint.startsWith('http') ? endpoint : `${API}${endpoint}`;
     try {
         const res = await fetch(url, {
@@ -2765,10 +2766,12 @@ async function safeFetch(endpoint, options = {}) {
         });
         if (res.status === 401) { window.location.href = '/login'; return null; }
         if (res.status === 0 || !res.ok) {
-            console.error(`API error ${res.status} at ${url}`);
+            console.error(`[API ERROR] ❌ ${res.status} at ${url}`);
             return { error: true, message: `Server returned ${res.status}` };
         }
-        return await res.json();
+        const data = await res.json();
+        console.log(`[API RESPONSE] ✅ ${url}`, data);
+        return data;
     } catch (err) {
         console.error(`Network error at ${url}:`, err.message);
         return { error: true, message: 'Cannot reach server — check connection' };
@@ -2787,6 +2790,7 @@ function toggleWhy(btn) {
 
 // ── WIZARD NAVIGATION ──
 function nextWizardStep() {
+  console.log(`[UI] 🖱 nextWizardStep() clicked (moving to step ${wizardStep + 1})`);
   document.getElementById('wizard-step-' + wizardStep).style.display = 'none';
   document.getElementById('step-dot-' + wizardStep).classList.remove('active');
   document.getElementById('step-dot-' + wizardStep).classList.add('done');
@@ -2831,6 +2835,7 @@ function fillDemo() {
 
 // ── SUBMIT PROFILE (called from onboarding wizard Step 3) ──
 async function submitProfile() {
+  console.log("[UI] 🖱 submitProfile() clicked");
   const name     = document.getElementById('f-name').value.trim()     || USER_DEFAULTS.name;
   const age      = parseInt(document.getElementById('f-age').value)    || USER_DEFAULTS.age;
   const exp      = document.getElementById('f-exp').value              || USER_DEFAULTS.investment_experience;
@@ -3339,6 +3344,7 @@ if (localStorage.getItem('swt_user') && !window.loadFromCloud) {
 
 // ── NAVIGATION ──
 function switchPage(name, navEl) {
+  console.log(`[UI] 🖱 switchPage('${name}') clicked`);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -3582,7 +3588,7 @@ async function simulateFraud() {
   
   try {
     const data = await safeFetch(`/api/simulate/fraud`, {
-      method: \'POST\'
+      method: 'POST'
     });
     
     // Simulate a slight delay for dramatic effect
@@ -4205,6 +4211,7 @@ const SCAN_STEPS = [
 ];
 
 function initiateTransfer() {
+  console.log("[UI] 🖱 initiateTransfer() clicked");
   const amount    = parseFloat(document.getElementById('tx-amount')?.value || 0);
   const recipient = document.getElementById('tx-recipient')?.value.trim();
   if (!amount || amount <= 0)    { alert('Please enter a valid amount.'); return; }
