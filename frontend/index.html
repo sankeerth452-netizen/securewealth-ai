@@ -2775,9 +2775,15 @@ async function safeFetch(endpoint, options = {}) {
     }
 }
 
-// ── WIZARD STATE ──
 let wizardStep = 1;
 let selectedRisk = USER.risk_appetite || 'medium';
+
+function toggleWhy(btn) {
+    const tooltip = btn.nextElementSibling;
+    if (tooltip && tooltip.classList.contains('why-tooltip')) {
+        tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+    }
+}
 
 // ── WIZARD NAVIGATION ──
 function nextWizardStep() {
@@ -3343,9 +3349,20 @@ function switchPage(name, navEl) {
   }
   if (name === 'dashboard') {
     loadDashboard();
+    loadActivityFeed();
+    populateBankCard();
   }
   if (name === 'alerts') {
     loadRiskAlerts();
+  }
+  if (name === 'transfer') {
+    populateBankCard();
+    const bcName = document.getElementById('bc-name');
+    if (bcName) bcName.textContent = USER.name || '—';
+    const bcBal = document.getElementById('bc-balance');
+    const bal = (USER.current_savings||0) + (USER.investments_value||0);
+    if (bcBal) animateCounter(bcBal, bal);
+    resetTransfer();
   }
 }
 
@@ -4463,24 +4480,7 @@ function populateAppFromUser() {
   window._loginTime = Date.now();
 }
 
-// ── PATCH switchPage for transfer ──
-const _origSwitchPage = switchPage;
-function switchPage(name, navEl) {
-  _origSwitchPage(name, navEl);
-  if (name === 'transfer') {
-    populateBankCard();
-    const bcName = document.getElementById('bc-name');
-    if (bcName) bcName.textContent = USER.name || '—';
-    const bcBal = document.getElementById('bc-balance');
-    const bal = (USER.current_savings||0) + (USER.investments_value||0);
-    if (bcBal) animateCounter(bcBal, bal);
-    resetTransfer();
-  }
-  if (name === 'dashboard') {
-    loadActivityFeed();
-    populateBankCard();
-  }
-}
+// Patch removed to avoid infinite recursion
 
 // ══════════════════════════════════════════════════
 
