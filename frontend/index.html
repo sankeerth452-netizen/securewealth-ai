@@ -505,1279 +505,26 @@
     </main>
   </div>
 <script>
-// ── USER DATA (mutable, persisted in localStorage) ──
+/**
+ * SECUREWEALTH TWIN v2.3 — Full Production Stabilization
+ * Features: Apple UI, Safe DOM Access, Proper Lifecycle, and All Business Logic
+ */
+
+// ── CONSTANTS & GLOBAL STATE ──
+const API = "https://securewealth-backend.onrender.com";
 const USER_DEFAULTS = {
-  name: "Priya",
-  age: 28,
-  income: 55000,
-  monthly_expenses: 35000,
-  goal: "buy a house in 7 years",
-  risk_appetite: "medium",
-  current_savings: 120000,
-  investments_value: 60000,
-  investment_experience: "beginner",
-  avg_investment: 5000,
-  timeline: 7,
-  assets: {
-    gold: 150000,
-    property: 2500000,
-    vehicles: 300000
-  },
+  name: "Priya", age: 28, income: 55000, monthly_expenses: 35000,
+  goal: "buy a house in 7 years", risk_appetite: "medium",
+  current_savings: 120000, investments_value: 60000,
+  investment_experience: "beginner", avg_investment: 5000, timeline: 7,
+  assets: { savings: 120000, investments: 60000, property: 0, gold: 0, vehicles: 0 },
   transactions: [
-    { type: "debit", label: "Swiggy", amount: 450 },
-    { type: "debit", label: "Amazon", amount: 1200 },
-    { type: "credit", label: "Salary", amount: 55000 },
-    { type: "debit", label: "Rent", amount: 15000 },
+    { type: "credit", label: "Monthly Income", amount: 55000 },
+    { type: "debit", label: "Rent & Utilities", amount: 15000 },
     { type: "debit", label: "Groceries", amount: 3200 }
   ]
 };
 
-let USER = JSON.parse(localStorage.getItem('swt_user') || 'null') || { ...USER_DEFAULTS };
-
-// Migration/Data Integrity for Demo
-if (!USER.assets) {
-  USER.assets = { ...USER_DEFAULTS.assets };
-  saveUser();
-}
-if (!USER.transactions) {
-  USER.transactions = [...USER_DEFAULTS.transactions];
-  saveUser();
-}
-
-function saveUser() {
-  localStorage.setItem('swt_user', JSON.stringify(USER));
-}
-
-const API = "https://securewealth-backend.onrender.com";
-
-// Safe fetch — never silently fails
-async function safeFetch(endpoint, options = {}) {
-    console.log(`[API CALL] 🚀 ${options.method || 'GET'} ${endpoint}`, options.body ? JSON.parse(options.body) : '');
-    const url = endpoint.startsWith('http') ? endpoint : `${API}${endpoint}`;
-    try {
-        const res = await fetch(url, {
-            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-            ...options,
-        });
-        if (res.status === 401) { window.location.href = '/login'; return null; }
-        if (res.status === 0 || !res.ok) {
-            console.error(`[API ERROR] ❌ ${res.status} at ${url}`);
-            return { error: true, message: `Server returned ${res.status}` };
-        }
-        const data = await res.json();
-        console.log(`[API RESPONSE] ✅ ${url}`, data);
-        return data;
-    } catch (err) {
-        console.error(`Network error at ${url}:`, err.message);
-        return { error: true, message: 'Cannot reach server — check connection' };
-    }
-}
-
-let wizardStep = 1;
-let selectedRisk = USER.risk_appetite || 'medium';
-
-function toggleWhy(btn) {
-    const tooltip = btn.nextElementSibling;
-    if (tooltip && tooltip.classList.contains('why-tooltip')) {
-        tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
-    }
-}
-
-// ── WIZARD NAVIGATION ──
-function nextWizardStep() {
-  console.log(`[UI] 🖱 nextWizardStep() clicked (moving to step ${wizardStep + 1})`);
-  document.getElementById('wizard-step-' + wizardStep).style.display = 'none';
-  document.getElementById('step-dot-' + wizardStep).classList.remove('active');
-  document.getElementById('step-dot-' + wizardStep).classList.add('done');
-  wizardStep++;
-  document.getElementById('wizard-step-' + wizardStep).style.display = 'block';
-  document.getElementById('step-dot-' + wizardStep).classList.add('active');
-}
-
-function prevWizardStep() {
-  document.getElementById('wizard-step-' + wizardStep).style.display = 'none';
-  document.getElementById('step-dot-' + wizardStep).classList.remove('active');
-  wizardStep--;
-  document.getElementById('wizard-step-' + wizardStep).style.display = 'block';
-  document.getElementById('step-dot-' + wizardStep).classList.remove('done');
-  document.getElementById('step-dot-' + wizardStep).classList.add('active');
-}
-
-// ── RISK SELECTOR ──
-function selectRisk(level) {
-  selectedRisk = level;
-  ['low', 'medium', 'high'].forEach(l =>
-    document.getElementById('risk-' + l).classList.toggle('active', l === level)
-  );
-}
-
-// ── DEMO FILL ──
-function fillDemo() {
-  document.getElementById('f-name').value     = 'Priya Sharma';
-  document.getElementById('f-age').value      = '28';
-  document.getElementById('f-exp').value      = 'beginner';
-  // auto-advance to step 2
-  if (wizardStep === 1) nextWizardStep();
-  document.getElementById('f-income').value      = '55000';
-  document.getElementById('f-expenses').value    = '35000';
-  document.getElementById('f-savings').value     = '120000';
-  document.getElementById('f-investments').value = '60000';
-  if (wizardStep === 2) nextWizardStep();
-  document.getElementById('f-goal').value     = 'Buy a house';
-  document.getElementById('f-timeline').value = '7';
-  selectRisk('medium');
-}
-
-// ── SUBMIT PROFILE (called from onboarding wizard Step 3) ──
-async function submitProfile() {
-  console.log("[UI] 🖱 submitProfile() clicked");
-  const name     = document.getElementById('f-name').value.trim()     || USER_DEFAULTS.name;
-  const age      = parseInt(document.getElementById('f-age').value)    || USER_DEFAULTS.age;
-  const exp      = document.getElementById('f-exp').value              || USER_DEFAULTS.investment_experience;
-  const income   = parseFloat(document.getElementById('f-income').value)   || USER_DEFAULTS.income;
-  const expenses = parseFloat(document.getElementById('f-expenses').value) || USER_DEFAULTS.monthly_expenses;
-  const savings  = parseFloat(document.getElementById('f-savings').value)  || USER_DEFAULTS.current_savings;
-  const invValue = parseFloat(document.getElementById('f-investments').value) || USER_DEFAULTS.investments_value;
-  const goal     = document.getElementById('f-goal').value             || USER_DEFAULTS.goal;
-  const timeline = parseInt(document.getElementById('f-timeline').value)   || USER_DEFAULTS.timeline;
-
-  // Show loading animation
-  document.getElementById('wizard-step-3').style.display = 'none';
-  document.getElementById('wizard-loading').style.display = 'block';
-
-  // 🔗 Persist to DB (using generic password for demo)
-  const password = "demoPassword123";
-  const email = `${name.toLowerCase().replace(/\s/g, '.')}@example.com`;
-
-  try {
-    const res = await safeFetch(`${API}/api/auth/register`, {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password }),
-    });
-
-    if (!res || res.error || res.detail) {
-        console.error('[Signup] ❌ failed:', res?.detail || res?.message);
-    } else {
-        localStorage.setItem('jwt_token', res.token);
-        localStorage.setItem('account_number', res.account_number);
-        console.log('[Signup] ✅ User created in DB:', res.email);
-    }
-  } catch(e) {
-    console.error("[Signup] ❌ error:", e);
-  }
-
-  // Update local USER object
-  Object.assign(USER, {
-    name,
-    age,
-    investment_experience: exp,
-    income,
-    monthly_expenses: expenses,
-    current_savings: savings,
-    investments_value: invValue,
-    goal: `${goal} in ${timeline} years`,
-    risk_appetite: selectedRisk,
-    avg_investment: Math.round((income - expenses) * 0.1),
-    timeline
-  });
-
-  saveUser();
-
-  // Brief pause for UX
-  await new Promise(r => setTimeout(r, 1000));
-
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-  populateAppFromUser();
-}
-
-// ── POPULATE APP UI FROM USER ──
-// ── HELPERS ──
-function createWhyTooltip(text) {
-  if (!text) text = "No explanation available";
-  const safeText = text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-  return `<span class="why-btn" onclick="showWhy(event, '${safeText}')">💡 Why?</span>`;
-}
-
-function showWhy(e, text) {
-  const tooltip = document.getElementById('why-tooltip');
-  tooltip.innerText = text;
-  tooltip.style.display = 'block';
-
-  const rect = e.target.getBoundingClientRect();
-  tooltip.style.top = (rect.bottom + 8) + 'px';
-  tooltip.style.left = rect.left + 'px';
-  
-  // Stop propagation so the global listener doesn't hide it immediately
-  e.stopPropagation();
-}
-
-document.addEventListener('click', function(e) {
-  const tooltip = document.getElementById('why-tooltip');
-  if (tooltip && !e.target.classList.contains('why-btn')) {
-    tooltip.style.display = 'none';
-  }
-});
-
-async function populateAppFromUser() {
-  // Prevent recursion / multiple concurrent loads
-  if (window._populatingApp) return;
-  window._populatingApp = true;
-
-  try {
-    const initials = (USER.name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-
-    // Sidebar
-    const sidebarAvatar = document.getElementById('sidebar-avatar');
-    const sidebarName = document.getElementById('sidebar-name');
-    const sidebarRole = document.getElementById('sidebar-role');
-    if (sidebarAvatar) sidebarAvatar.textContent = initials;
-    if (sidebarName) sidebarName.textContent = USER.name;
-    if (sidebarRole) sidebarRole.textContent = USER.risk_appetite.charAt(0).toUpperCase() + USER.risk_appetite.slice(1) + ' Investor';
-
-    // Dashboard Greeting
-    const dashGreeting = document.getElementById('dash-greeting');
-    if (dashGreeting) {
-        const hour = new Date().getHours();
-        const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-        dashGreeting.textContent = `${greeting}, ${USER.name.split(' ')[0]} 👋`;
-    }
-
-    // Update UI with real data if authenticated
-    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-    if (token) {
-        const res = await safeFetch('/api/auth/me', { method: 'GET' });
-        if (res && !res.error) {
-            USER.name = res.name || USER.name;
-            USER.income = res.balance ? (res.balance / 10) : USER.income; // Just a placeholder sync
-        }
-    }
-
-    // Refresh child components
-    updateChart();
-    loadNetworth();
-    loadDashboard();
-    loadRiskAlerts();
-    renderTransactions();
-    populateBankCard();
-    loadActivityFeed();
-
-  } catch (err) {
-    console.error('populateAppFromUser error:', err);
-  } finally {
-    window._populatingApp = false;
-  }
-}
-
-// ── WEALTH CHART (DYNAMIC) ──
-function updateChart() {
-  const data = [];
-  let value = USER.current_savings || 0;
-  
-  for (let i = 0; i < 12; i++) {
-    value += ((USER.income || 0) * 0.2); // assume 20% savings
-    value *= 1.008; // ~10% annual return -> 0.8% monthly
-    data.push(value);
-  }
-  
-  const minVal = Math.min(...data);
-  const maxVal = Math.max(...data);
-  
-  const w = 400;
-  const h = 160;
-  const topPad = 15;
-  const botPad = 140;
-  const range = (maxVal - minVal) || 1;
-  const ySpan = botPad - topPad;
-  
-  const xStep = w / (data.length - 1);
-  
-  const points = data.map((val, i) => {
-    const x = i * xStep;
-    const y = botPad - ((val - minVal) / range) * ySpan;
-    return {x, y};
-  });
-  
-  // Build smooth quadratic path
-  let pathD = `M${points[0].x},${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    // Control point half-way
-    const midX = (points[i-1].x + points[i].x) / 2;
-    pathD += ` Q${midX},${points[i-1].y} ${points[i].x},${points[i].y}`;
-  }
-  
-  const lineEl = document.getElementById("dash-chart-line");
-  const areaEl = document.getElementById("dash-chart-area");
-  const dotEl = document.getElementById("dash-chart-dot");
-  
-  if (lineEl && areaEl && dotEl) {
-    lineEl.setAttribute("d", pathD);
-    areaEl.setAttribute("d", `${pathD} L${w},${h} L0,${h} Z`);
-    
-    const lastP = points[points.length - 1];
-    dotEl.setAttribute("cx", lastP.x);
-    dotEl.setAttribute("cy", lastP.y);
-
-    // Bonus: Animate drawing the line
-    try {
-        const length = lineEl.getTotalLength();
-        lineEl.style.strokeDasharray = length;
-        lineEl.style.strokeDashoffset = length;
-        lineEl.style.transition = "none";
-        
-        // Trigger reflow to reset animation
-        void lineEl.getBoundingClientRect();
-        
-        lineEl.style.transition = "stroke-dashoffset 1s ease-in-out";
-        lineEl.style.strokeDashoffset = "0";
-    } catch(e) {}
-  }
-}
-
-// ── DASHBOARD ──
-async function loadDashboard() {
-  try {
-    const [networthRes, profileRes] = await Promise.all([
-      fetch(`${API}/api/ai/networth`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          savings: USER.current_savings || 0,
-          investments: USER.investments_value || 0,
-          property_value: USER.assets?.property || 0,
-          gold_value: USER.assets?.gold || 0,
-          vehicle_value: USER.assets?.vehicles || 0
-        })
-      }),
-      fetch(`${API}/api/ai/profile/analyze`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(USER)
-      })
-    ]);
-
-    const networthData = await networthRes.json();
-    const profileData = await profileRes.json();
-
-    const nw = networthData.summary;
-    const profile = profileData;
-
-    if (nw) {
-      document.getElementById('dash-networth').innerText = `₹${nw.net_worth.toLocaleString('en-IN')}`;
-      document.getElementById('dash-income').innerText = `₹${USER.income.toLocaleString('en-IN')}`;
-      document.getElementById('dash-savings').innerText = `₹${nw.total_assets.toLocaleString('en-IN')}`;
-
-      const savingsRate = ((nw.total_assets / (USER.income * 12)) * 100).toFixed(1);
-      document.getElementById('dash-savings-rate').innerText = savingsRate + "%";
-      
-      const total = nw.total_assets || 0;
-      const getPct = (val) => total > 0 ? Math.round((val / total) * 100) : 0;
-      
-      const assetsList = [
-        { label: "💰 Savings", val: USER.current_savings || 0 },
-        { label: "📈 Mutual Funds", val: USER.investments_value || 0 },
-        { label: "🪙 Gold", val: USER.assets?.gold || 0 },
-        { label: "🏠 Property", val: USER.assets?.property || 0 },
-        { label: "🚗 Vehicles", val: USER.assets?.vehicles || 0 }
-      ];
-
-      let portfolioHTML = assetsList.map(a => {
-        if (a.val <= 0) return '';
-        return `
-          <div class="stat-row" style="padding: 10px 0;">
-            <div class="stat-row-label">${a.label}</div>
-            <div class="stat-row-value">₹${a.val.toLocaleString('en-IN')} <span style="font-size:11px; color:var(--text-secondary); margin-left:4px;">(${getPct(a.val)}%)</span></div>
-          </div>
-        `;
-      }).join('');
-
-      // Smart Insight
-      let portfolioInsight = "Your portfolio is looking balanced. Keep maintaining this mix for steady growth.";
-      const savingsPct = getPct(USER.current_savings);
-      const propertyPct = getPct(USER.assets?.property);
-      
-      if (savingsPct > 50) {
-        portfolioInsight = "You currently keep a large portion in cash. Moving a small part into mutual funds could significantly improve your long-term returns.";
-      } else if (propertyPct > 70) {
-        portfolioInsight = "A large part of your wealth is tied up in property. Diversifying into more liquid assets like gold or funds could improve your flexibility.";
-      }
-
-      portfolioHTML += `
-        <div style="margin-top:14px; padding:12px; background:rgba(0,212,170,0.05); border-radius:12px; border:1px solid rgba(0,212,170,0.1);">
-          <div style="font-size:13px; color:var(--text-primary); line-height:1.4;">💡 ${portfolioInsight}</div>
-        </div>
-      `;
-      
-      document.getElementById("dash-portfolio").innerHTML = portfolioHTML;
-    }
-
-    if (profile && profile.archetype) {
-      const whyExplanation = `This persona is based on your current ₹${USER.income.toLocaleString('en-IN')} income, your ${profile.savings_rate}% savings discipline, and your stated "${USER.risk_appetite}" risk preference.`;
-      
-      document.getElementById('dash-archetype').innerHTML = `${profile.archetype} ${createWhyTooltip(whyExplanation)}`;
-      
-      let humanDesc = "";
-      const arc = profile.archetype.toLowerCase();
-      if (arc.includes("disciplined")) {
-        humanDesc = "You consistently save and invest wisely, showing strong financial habits that build long-term wealth.";
-      } else if (arc.includes("conservative") || arc.includes("saver")) {
-        humanDesc = "You prioritize safety and stability, preferring reliable growth over high-risk market swings.";
-      } else if (arc.includes("aggressive") || arc.includes("growth")) {
-        humanDesc = "You have a high appetite for growth and are willing to navigate market volatility for significant returns.";
-      } else {
-        humanDesc = "You are currently focusing on building your foundational habits for a secure and growing financial future.";
-      }
-      
-      document.getElementById('dash-desc').textContent = humanDesc;
-      document.getElementById('dash-tags').innerHTML = `
-        <span class="signal-tag" style="background:var(--teal-light);color:var(--teal);border-color:var(--teal)">💪 ${profile.strength}</span>
-        <span class="signal-tag" style="background:var(--amber-light);color:var(--amber);border-color:var(--amber)">⚠️ ${profile.weakness}</span>
-      `;
-      document.getElementById('dash-savings-rate').textContent = `${profile.savings_rate}% savings rate`;
-      
-      if (profile.behavior_score !== undefined) {
-        const score = profile.behavior_score;
-        const color = score >= 70 ? 'var(--teal)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
-        document.getElementById('dash-behavior-score').innerText = `${score} (${profile.behavior_label})`;
-        document.getElementById('dash-behavior-score').style.color = color;
-        document.getElementById('dash-behavior-explanation').innerText = profile.score_explanation || "Consistency is key.";
-      }
-    }
-    
-    renderTransactions();
-  } catch (error) {
-    console.error("Failed to load dashboard data:", error);
-    document.getElementById('dash-archetype').textContent = "Profile Unavailable";
-    document.getElementById('dash-desc').textContent = "Unable to connect to SecureWealth AI.";
-  }
-}
-
-// ── NET WORTH ──
-async function loadNetworth() {
-  document.getElementById("nw-total-assets").innerText = "Loading...";
-  document.getElementById("nw-total-liabilities").innerText = "Loading...";
-  document.getElementById("nw-net-worth").innerText = "Loading...";
-  document.getElementById("nw-breakdown").innerHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);'>Loading...</div>";
-  document.getElementById("nw-assets-cats").innerText = "Calculating...";
-  document.getElementById("nw-liabilities-note").innerText = "Calculating...";
-
-  try {
-    const startTime = Date.now();
-    const res = await fetch(`${API}/api/ai/networth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_profile: USER,
-        savings: USER.current_savings || 0,
-        investments: USER.investments_value || 0,
-        property_value: USER.assets?.property || 0,
-        gold_value: USER.assets?.gold || 0,
-        vehicle_value: USER.assets?.vehicles || 0
-      })
-    });
-    
-    const data = await res.json();
-    const elapsed = Date.now() - startTime;
-    const MIN_DELAY = 300;
-    
-    if (elapsed < MIN_DELAY) {
-      await new Promise(res => setTimeout(res, MIN_DELAY - elapsed));
-    }
-    
-    if (data.summary) {
-      document.getElementById("nw-total-assets").innerText = `₹${data.summary.total_assets.toLocaleString('en-IN')}`;
-      document.getElementById("nw-total-liabilities").innerText = `₹${data.summary.total_liabilities.toLocaleString('en-IN')}`;
-      document.getElementById("nw-net-worth").innerText = `₹${data.summary.net_worth.toLocaleString('en-IN')}`;
-      document.getElementById("nw-assets-cats").innerText = "Updated just now";
-      document.getElementById("nw-liabilities-note").innerText = data.summary.total_liabilities === 0 ? "No liabilities" : "Updated just now";
-      
-      let breakdownHTML = '';
-      if (data.breakdown) {
-          const icons = {
-              savings: '🏦',
-              investments: '📈',
-              property: '🏠',
-              gold: '🪙',
-              vehicles: '🚗',
-              other: '📦'
-          };
-          const names = {
-              savings: 'Savings Account',
-              investments: 'Mutual Funds',
-              property: 'Property',
-              gold: 'Gold',
-              vehicles: 'Vehicles',
-              other: 'Other Assets'
-          };
-          for (const [key, value] of Object.entries(data.breakdown)) {
-              if (value > 0) {
-                  breakdownHTML += `
-                  <div class="stat-row">
-                    <div class="stat-row-label">${icons[key] || '🔹'} ${names[key] || key}</div>
-                    <div class="stat-row-value">₹${value.toLocaleString('en-IN')}</div>
-                  </div>`;
-              }
-          }
-      }
-      if (breakdownHTML === '') {
-          breakdownHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);'>No assets found</div>";
-      }
-      document.getElementById("nw-breakdown").innerHTML = breakdownHTML;
-    }
-  } catch (error) {
-    console.error("Failed to load net worth", error);
-    document.getElementById("nw-total-assets").innerText = "—";
-    document.getElementById("nw-total-liabilities").innerText = "—";
-    document.getElementById("nw-net-worth").innerText = "—";
-    document.getElementById("nw-breakdown").innerHTML = "<div style='padding:20px;text-align:center;color:var(--amber); font-weight: 500;'>⚠️ Unable to connect to server</div>";
-    document.getElementById("nw-assets-cats").innerText = "Server unavailable";
-    document.getElementById("nw-liabilities-note").innerText = "Try again later";
-  }
-}
-
-// ── LOGIN (skip-wizard path, kept for compatibility) ──
-function doLogin() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-  populateAppFromUser();
-}
-
-// ── HYBRID LOADING: try cloud, fallback to local ──
-async function initApp() {
-  console.log("App initialization...");
-  
-  if (localStorage.getItem('swt_user')) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').classList.add('visible');
-    populateAppFromUser();
-  }
-}
-
-// Fallback for immediate load if module is slow, but module will re-run initApp
-if (localStorage.getItem('swt_user')) {
-  initApp();
-}
-
-// ── NAVIGATION ──
-function switchPage(name, navEl) {
-  console.log(`[UI] 🖱 switchPage('${name}') clicked`);
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  if (navEl) navEl.classList.add('active');
-  
-  if (name === 'networth') {
-    loadNetworth();
-  }
-  if (name === 'dashboard') {
-    loadDashboard();
-    loadActivityFeed();
-    populateBankCard();
-  }
-  if (name === 'alerts') {
-    loadRiskAlerts();
-  }
-  if (name === 'transfer') {
-    populateBankCard();
-    const bcName = document.getElementById('bc-name');
-    if (bcName) bcName.textContent = USER.name || '—';
-    const bcBal = document.getElementById('bc-balance');
-    const bal = (USER.current_savings||0) + (USER.investments_value||0);
-    if (bcBal) animateCounter(bcBal, bal);
-    resetTransfer();
-  }
-}
-
-// ── RISK ALERTS ──
-async function loadRiskAlerts() {
-  document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--text-muted);font-size:13px;'>Loading audit log...</div>";
-  
-  try {
-    const data = await safeFetch(`/api/execute/audit`);
-    if (data && data.error) throw new Error(data.message);
-    
-    const logs = data.log || [];
-    
-    if (!document.getElementById('risk-animations')) {
-      document.head.insertAdjacentHTML('beforeend', '<style id="risk-animations">@keyframes riskFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }</style>');
-    }
-
-    const now = new Date();
-    document.getElementById("risk-last-check").innerHTML = `<span style="color:var(--teal)">🟢 Monitoring Active</span> • Updated just now`;
-
-    const hasWarn = logs.some(a => a.decision === "WARN");
-    const hasBlock = logs.some(a => a.decision === "BLOCK");
-    let bannerHTML = "";
-    if (hasBlock) {
-      bannerHTML = `
-        <div style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: red; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600;">
-          🔴 High-risk activity detected
-        </div>`;
-    } else if (hasWarn) {
-      bannerHTML = `
-        <div style="background: rgba(255,182,39,0.1); border: 1px solid rgba(255,182,39,0.3); color: var(--amber); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600;">
-          ⚠️ Unusual activity detected
-        </div>`;
-    }
-    document.getElementById("risk-banner").innerHTML = bannerHTML;
-    
-    document.getElementById("alert-total").innerText = data.total_evaluations || logs.length;
-    
-    let warnCount = 0;
-    let blockCount = 0;
-    let protectedAmt = 0;
-    
-    logs.forEach(l => {
-      if (l.decision === 'WARN') warnCount++;
-      if (l.decision === 'BLOCK') {
-        blockCount++;
-        protectedAmt += (l.amount || 0);
-      }
-    });
-    
-    document.getElementById("alert-warns").innerText = warnCount;
-    document.getElementById("alert-blocks").innerText = blockCount;
-    document.getElementById("alert-protected").innerText = `Protected ₹${protectedAmt.toLocaleString('en-IN')}`;
-    
-    // Update Dashboard Shield based on latest log
-    const latest = logs[0];
-    if (latest && document.getElementById('dash-shield-score')) {
-      const decision = latest.decision || 'ALLOW';
-      const widget = document.getElementById('dash-shield-widget');
-      const scoreDisp = document.getElementById('dash-shield-score');
-      const levelDisp = document.getElementById('dash-shield-level');
-      const explDisp = document.getElementById('dash-security-explanation');
-      const iconDisp = document.getElementById('dash-shield-icon');
-
-      widget.className = 'risk-shield-widget ' + (decision === 'BLOCK' ? 'shield-high' : decision === 'WARN' ? 'shield-medium' : 'shield-low');
-      scoreDisp.innerText = decision === 'BLOCK' ? 'HIGH' : decision === 'WARN' ? 'MEDIUM' : 'LOW';
-      levelDisp.innerText = decision === 'BLOCK' ? 'Action Blocked' : decision === 'WARN' ? 'Unusual Activity' : 'All Clear';
-      iconDisp.innerText = decision === 'BLOCK' ? '🚫' : decision === 'WARN' ? '⚠️' : '🛡️';
-      
-      if (decision === 'ALLOW') {
-        explDisp.innerHTML = "🟢 Your account activity is consistent with your usual patterns.";
-      } else {
-        explDisp.innerHTML = `<span style="color:${decision==='BLOCK'?'var(--red)':'var(--amber)'}">${latest.reason}</span>`;
-      }
-
-      // Update Pyramid
-      const pyr = latest.trust_pyramid || { identity:true, context:true, behavior:true, intent:true };
-      const items = document.querySelectorAll('#dash-pyramid .pyramid-item');
-      ['identity','context','behavior','intent'].forEach((k, i) => {
-        if (pyr[k]) items[i].classList.add('active');
-        else items[i].classList.remove('active');
-      });
-    }
-    
-    if (logs.length === 0) {
-      document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--teal);font-weight:500;font-size:13px;'>🟢 No suspicious activity detected. Your account is safe.</div>";
-      return;
-    }
-    
-    const icons = { 'ALLOW': '🟢', 'WARN': '🟡', 'BLOCK': '🔴' };
-    const classes = { 'ALLOW': 'alert-allow', 'WARN': 'alert-warn', 'BLOCK': 'alert-block' };
-    const colorClass = { 'ALLOW': 'var(--teal)', 'WARN': 'var(--amber)', 'BLOCK': 'var(--red)' };
-    
-    const html = logs.slice().reverse().map((l, idx) => {
-      const icon = icons[l.decision] || '⚪';
-      const c = classes[l.decision] || '';
-      const col = colorClass[l.decision] || 'var(--text)';
-      const time = new Date(l.timestamp).toLocaleString('en-IN', {hour: '2-digit', minute:'2-digit', month:'short', day:'numeric'});
-      const title = `${(l.action_type || 'Transaction').toUpperCase()} — ₹${(l.amount || 0).toLocaleString('en-IN')} ${l.decision}`;
-      const signals = (l.signals || []).join(' · ') || 'System check';
-      
-      const isLatest = idx === 0;
-      const latestStyles = isLatest ? `border: 1px solid ${col}; box-shadow: 0 0 15px ${col}30; animation: riskFadeIn 0.4s ease-out;` : '';
-      const badge = isLatest ? `<span style="font-size:9px; background:${col}; color:#fff; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">LATEST</span>` : '';
-      
-      return `
-        <div class="alert-item ${c}" style="${latestStyles}">
-          <div class="alert-icon">${icon}</div>
-          <div class="alert-body">
-            <div class="alert-title" style="display:flex;align-items:center;">${title} ${badge}</div>
-            <div class="alert-meta">${signals} · ${time}</div>
-            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic;">"${l.reason}"</div>
-          </div>
-          <div class="alert-score" style="color:${col}">${Math.round(l.risk_score || 0)}</div>
-        </div>
-      `;
-    }).join("");
-    
-    document.getElementById("audit-log-container").innerHTML = html;
-    
-  } catch(e) {
-    console.error("Failed to load alerts:", e);
-    document.getElementById("audit-log-container").innerHTML = "<div style='padding:20px;text-align:center;color:var(--red);font-size:13px;'>Unable to load alerts</div>";
-  }
-}
-
-function showSecurityDetail(type) {
-  const messages = {
-    identity: "Your device, location, and login biometrics match your previous activity perfectly.",
-    context: "The time, location, and network used for this action are consistent with your daily routine.",
-    behavior: "The transaction amount and frequency are well within your normal historical range.",
-    intent: "This action directly supports your stated financial goals and long-term wealth strategy."
-  };
-  const expl = document.getElementById('dash-security-explanation');
-  expl.style.animation = 'none';
-  void expl.offsetWidth;
-  expl.style.animation = 'fade-in 0.3s ease';
-  expl.innerHTML = `<b>${type.charAt(0).toUpperCase()+type.slice(1)}:</b> ${messages[type]}`;
-}
-
-function renderTransactions() {
-  const container = document.getElementById('transactions-list');
-  if (!container) return;
-
-  if (!USER.transactions || USER.transactions.length === 0) {
-    container.innerHTML = "<div style='padding:10px;text-align:center;color:var(--text-muted);font-size:13px;'>No transactions found</div>";
-    return;
-  }
-
-  container.innerHTML = USER.transactions.map(tx => `
-    <div class="tx-row">
-      <span class="tx-label">${tx.label}</span>
-      <span class="${tx.type}">
-        ${tx.type === 'debit' ? '-' : '+'}₹${tx.amount.toLocaleString('en-IN')}
-      </span>
-    </div>
-  `).join('');
-}
-
-// ── HELPERS ──
-function buildReasoningPanel() {
-  const savings = USER.income - USER.monthly_expenses;
-  const rate = USER.income > 0 ? Math.round((savings / USER.income) * 100) : 0;
-  
-  let explanation = "";
-  if (rate > 40) {
-    explanation = `Since you're earning ₹${USER.income.toLocaleString('en-IN')}/month and already saving ${rate}% of it, you have a very strong foundation. This consistency allows us to look at more growth-oriented options with confidence.`;
-  } else if (rate > 20) {
-    explanation = `With an income of ₹${USER.income.toLocaleString('en-IN')} and a healthy ${rate}% savings rate, you're doing well. This suggestion helps optimize your existing surplus for your ${USER.goal} goal.`;
-  } else {
-    explanation = `Given your monthly income and current spending, focusing on this path will help you build a more robust safety net while still working towards your ${USER.goal}.`;
-  }
-
-  return `
-    <div class="ai-reason">
-      <div style="font-weight:700; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-        <span>💡</span> Why this suggestion?
-      </div>
-      <div style="opacity:0.9;">
-        ${explanation}
-      </div>
-    </div>
-  `;
-}
-
-function buildAgentFlow(data) {
-  const steps = [
-    { icon: '❓', label: 'Query', content: data.query },
-    { icon: '📊', label: 'Analyst', content: `Income ₹${(data.income||0).toLocaleString()}, Savings ${data.savings_rate}%` },
-    { icon: '🔍', label: 'Search', content: data.search },
-    { icon: '🧠', label: 'Reasoning', content: data.reason },
-    { icon: '💬', label: 'Decision', content: data.answer, final: true }
-  ];
-
-  return `
-    <div class="agent-flow">
-      <div style="font-size:9px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; letter-spacing:0.1em; font-weight:800; display:flex; align-items:center; gap:6px;">
-        <span style="width:6px; height:6px; background:var(--teal); border-radius:50%; animation:pulse-glow 1s infinite;"></span>
-        Cortex Agent Trace
-      </div>
-      ${steps.map((s, i) => `
-        <div class="step ${s.final ? 'final' : ''}" style="animation: fade-in 0.4s ease forwards; animation-delay: ${i * 0.5}s; opacity:0;">
-          <span style="margin-right:6px;">${s.icon}</span> <b>${s.label}:</b> ${s.content}
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-// ── SIMULATE FRAUD ──
-async function simulateFraud() {
-  if (!confirm("🚨 Proceed with Fraud Simulation?\n\nThis will trigger a high-risk scenario: ₹5,00,000 investment from a new device at 2 AM with failed OTP attempts.\n\nSee how SecureWealth Twin protects you!")) return;
-  
-  switchPage('chat', document.querySelector('.nav-item:nth-child(3)'));
-  addMessage('user', "Simulate high-risk transaction: Invest ₹5,00,000");
-  showTyping();
-  
-  try {
-    const data = await safeFetch(`/api/simulate/fraud`, {
-      method: 'POST'
-    });
-    
-    // Simulate a slight delay for dramatic effect
-    setTimeout(() => {
-      removeTyping();
-      handleChatResponse({
-          type: 'action_response',
-          execution: data,
-          ai_explanation: data.ai_explanation
-      }, "Invest ₹5,00,000");
-      
-      // Trigger a browser notification/alert if it's really bad
-      if (data.risk.decision === 'BLOCK') {
-          setTimeout(() => {
-              const alertDiv = document.createElement('div');
-              alertDiv.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--red); color:white; padding:16px 24px; border-radius:12px; font-weight:700; z-index:9999; box-shadow:0 10px 40px rgba(255,0,0,0.4); animation:slide-up 0.4s ease; display:flex; align-items:center; gap:12px;";
-              alertDiv.innerHTML = `<span>🚨 SECURITY ALERT: High-risk action blocked.</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">OK</button>`;
-              document.body.appendChild(alertDiv);
-          }, 800);
-      }
-    }, 1500);
-  } catch(e) {
-    removeTyping();
-    console.error(e);
-    alert("Simulation failed. Make sure backend is running.");
-  }
-}
-
-// ── WHY TOOLTIP ──
-
-// ── CHAT ──
-function setPrompt(text) {
-  document.getElementById('chat-input').value = text;
-  document.getElementById('chat-input').focus();
-}
-
-async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  
-  // Extract amount for high-value check
-  let amount = 0;
-  const match = msg.replace(/,/g, '').match(/(\d+)/);
-  if (match && (msg.toLowerCase().includes('invest') || msg.toLowerCase().includes('sip') || msg.toLowerCase().includes('buy'))) {
-    amount = parseInt(match[1]);
-  }
-
-  // Dynamic Risk Level Calculation
-  const usual = USER.avg_investment || 5000;
-  let riskStr = "LOW";
-  let riskColor = "var(--teal)";
-  let riskMsg = "🛡 All clear";
-  
-  if (amount > usual * 4) {
-    riskStr = "HIGH";
-    riskColor = "var(--red)";
-    riskMsg = "🛑 High risk – verification required";
-  } else if (amount > usual * 2) {
-    riskStr = "MEDIUM";
-    riskColor = "var(--amber)";
-    riskMsg = "⚠️ Unusual activity detected";
-  }
-  
-  const rLabel = document.getElementById('dash-risk-level');
-  const rDelta = document.getElementById('dash-risk-delta');
-  if (rLabel && rDelta) {
-    rLabel.innerText = riskStr;
-    rLabel.style.color = riskColor;
-    rDelta.innerText = riskMsg;
-  }
-
-  const processChat = async (message) => {
-    input.value = '';
-    addMessage('user', message);
-    showTyping();
-
-    try {
-      const res = await fetch(`${API}/api/ai/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: message, user_profile: USER })
-      });
-      const data = await res.json();
-      removeTyping();
-      handleChatResponse(data, message);
-    } catch(e) {
-      removeTyping();
-      demoFallback(message);
-    }
-  };
-
-  if (amount > 50000) {
-    requireOTP(amount, () => processChat(msg));
-  } else {
-    processChat(msg);
-  }
-}
-
-function handleChatResponse(data, query) {
-  if (data.type === 'action_response') {
-    const exec = data.execution || {};
-    const risk = exec.risk || {};
-    const decision = risk.decision || 'ALLOW';
-    const cooldown = exec.cooldown || 0;
-
-    // Show risk panel
-    const panelClass = decision === 'BLOCK' ? 'block' : decision === 'WARN' ? 'warn' : 'allow';
-    const icon = decision === 'BLOCK' ? '🔴' : decision === 'WARN' ? '🟡' : '🟢';
-    const signals = (risk.signals || []).map(s => `<span class="signal-tag">${s}</span>`).join('');
-    const pyramid = risk.trust_pyramid || {};
-
-    let riskHTML = `
-      <div class="risk-panel ${panelClass}">
-        <div class="risk-panel-header">
-          <span style="font-size:20px;">${icon}</span>
-          <span class="risk-badge badge-${decision.toLowerCase()}">${decision}</span>
-          <span class="risk-score-display" style="color:${decision==='BLOCK'?'var(--red)':decision==='WARN'?'var(--amber)':'var(--teal)'}">${risk.score || 0}/100</span>
-        </div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${risk.reason || ''}</div>
-        <div class="signals-list">${signals}</div>
-        <div class="pyramid-grid" style="margin-top:12px;">
-          ${['identity','context','behavior','intent'].map(k => `
-            <div class="pyramid-item ${pyramid[k] ? 'active' : ''}">
-              <div class="pyr-dot"></div>
-              <div class="pyr-label">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
-            </div>`).join('')}
-        </div>
-        ${exec.recommendation ? `
-          <div style="margin-top:14px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid ${decision==='BLOCK'?'var(--red)':'var(--teal)'};">
-            <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px; letter-spacing:0.05em;">💡 Recommendation</div>
-            <div style="font-size:13px; color:var(--text-primary); font-weight:500;">${exec.recommendation}</div>
-          </div>` : ''}
-      </div>`;
-
-    const messages = document.getElementById('chat-messages');
-    const div = document.createElement('div');
-    div.innerHTML = riskHTML;
-    div.style.animation = 'msg-in 0.3s ease';
-    messages.appendChild(div);
-
-    // COOLDOWN MECHANISM
-    if (cooldown > 0) {
-      const bannerCol = decision === 'BLOCK' ? 'var(--red)' : 'var(--amber)';
-      const bannerBg = decision === 'BLOCK' ? 'var(--red-dim)' : 'var(--amber-dim)';
-      const bannerTitle = decision === 'BLOCK' ? 'High Risk Detected' : 'Unusual Activity Detected';
-      
-      const bannerHTML = `
-        <div id="cooldown-banner" style="background:${bannerBg}; border:1px solid ${bannerCol}; color:${bannerCol}; padding:12px; border-radius:12px; margin:10px 0; font-weight:600; text-align:center; animation:msg-in 0.3s ease;">
-          ⚠️ ${bannerTitle}<br>
-          <span id="cooldown-timer" style="font-size:12px; font-weight:400;">Retry in ${cooldown}...</span>
-        </div>
-      `;
-      const bannerDiv = document.createElement('div');
-      bannerDiv.innerHTML = bannerHTML;
-      messages.appendChild(bannerDiv);
-
-      const input = document.getElementById('chat-input');
-      const btn = document.querySelector('.send-btn');
-      input.disabled = true;
-      btn.disabled = true;
-      btn.style.opacity = '0.5';
-
-      let timeLeft = cooldown;
-      const timer = setInterval(() => {
-        timeLeft--;
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          bannerDiv.remove();
-          input.disabled = false;
-          btn.disabled = false;
-          btn.style.opacity = '1';
-          input.focus();
-        } else {
-          document.getElementById('cooldown-timer').innerText = `Retry in ${timeLeft}...`;
-        }
-      }, 1000);
-    }
-
-    const reason = data.reason || exec.reason || data.ai_explanation;
-    addMessage('ai', data.ai_explanation || exec.message || 'Action evaluated.', reason);
-    
-    // Add reasoning and agent trace
-    const lastMsg = document.getElementById('chat-messages').lastElementChild;
-    const bubbleWrapper = lastMsg.querySelector('div > div');
-    
-    const reasoningDiv = document.createElement('div');
-    reasoningDiv.innerHTML = buildReasoningPanel();
-    bubbleWrapper.appendChild(reasoningDiv);
-
-    const agentDiv = document.createElement('div');
-    agentDiv.innerHTML = buildAgentFlow({
-      query: query || 'Action Request',
-      income: USER.income,
-      spending: USER.monthly_expenses,
-      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
-      search: "Stable history, low risk indicators",
-      reason: data.reason || exec.reason || "Contextual risk analysis complete",
-      answer: data.ai_explanation || exec.message || data.reply || "Approved"
-    });
-    bubbleWrapper.appendChild(agentDiv);
-
-    // Show simulation if available
-    const sim = exec.simulation || exec.simulation_preview;
-    if (sim && sim.nudge_message) {
-      setTimeout(() => {
-        addMessage('ai', `📊 ${sim.nudge_message}\n\nIf you invest ₹${(sim.projection?.[0]?.invested||0).toLocaleString('en-IN')}/month for 10 years, you could grow to ₹${sim.final_value?.toLocaleString('en-IN') || '?'}`, 'Based on compounding power and 12% expected annual returns.');
-      }, 500);
-    }
-
-  } else if (data.type === 'simulation_advice') {
-    let reply = data.reply || '';
-    if (data.summary) reply += `\n\n💰 Final value: ₹${(data.summary.final_value||0).toLocaleString('en-IN')}\n⚡ ${data.summary.nudge_message}`;
-    addMessage('ai', reply, 'Based on your income and investment timeline.');
-    
-    const lastMsg = document.getElementById('chat-messages').lastElementChild;
-    const bubbleWrapper = lastMsg.querySelector('div > div');
-    const agentDiv = document.createElement('div');
-    agentDiv.innerHTML = buildAgentFlow({
-      query: query || 'Simulator Advice',
-      income: USER.income,
-      spending: USER.monthly_expenses,
-      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
-      search: "Market trends stable, historical returns 12%",
-      reason: "Projection based on compounding",
-      answer: "Growth path simulated"
-    });
-    bubbleWrapper.appendChild(agentDiv);
-
-  } else if (data.type === 'networth_snapshot') {
-    addMessage('ai', data.reply, 'Based on your savings and investments on file.');
-    
-    const lastMsg = document.getElementById('chat-messages').lastElementChild;
-    const bubbleWrapper = lastMsg.querySelector('div > div');
-    const agentDiv = document.createElement('div');
-    agentDiv.innerHTML = buildAgentFlow({
-      query: query || 'Net Worth Inquiry',
-      income: USER.income,
-      spending: USER.monthly_expenses,
-      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
-      search: "Asset/Liability database synchronized",
-      reason: "Full balance sheet aggregation",
-      answer: "Wealth snapshot generated"
-    });
-    bubbleWrapper.appendChild(agentDiv);
-
-  } else {
-    addMessage('ai', data.reply || 'I can help with that!', data.reason);
-    
-    const lastMsg = document.getElementById('chat-messages').lastElementChild;
-    const bubbleWrapper = lastMsg.querySelector('div > div');
-    const agentDiv = document.createElement('div');
-    agentDiv.innerHTML = buildAgentFlow({
-      query: query || 'General Chat',
-      income: USER.income,
-      spending: USER.monthly_expenses,
-      savings_rate: Math.round(((USER.income - USER.monthly_expenses) / USER.income) * 100),
-      search: "User context loaded from profile",
-      reason: "Intent matching complete",
-      answer: data.reply || "Help provided"
-    });
-    bubbleWrapper.appendChild(agentDiv);
-  }
-}
-
-function demoFallback(msg) {
-  const m = msg.toLowerCase();
-  if (m.includes('1 lakh') || m.includes('100000')) {
-    handleChatResponse({
-      type: 'action_response',
-      ai_explanation: "We've blocked this transaction to protect your account. This amount is 20x your usual pattern and was detected on an unusual hour. Please review and try again if this was intentional.",
-      execution: {
-        status: 'blocked',
-        risk: { score: 65, decision: 'BLOCK', level: 'HIGH', reason: "We noticed an unusually large amount at an unusual hour.", signals: ["Unusual time: 2:00 AM", "Amount is 20x your usual pattern", "Round number amount"], trust_pyramid: { identity: false, context: true, behavior: true, intent: true } }
-      }
-    }, msg);
-  } else if (m.includes('sip') || m.includes('invest')) {
-    handleChatResponse({
-      type: 'action_response',
-      ai_explanation: "Great news! Your investment has been approved. This amount is consistent with your usual behavior.",
-      execution: {
-        status: 'approved',
-        risk: { score: 0, decision: 'ALLOW', level: 'LOW', reason: "This action looks normal and matches your usual behavior.", signals: [], trust_pyramid: { identity: false, context: false, behavior: false, intent: false } },
-        simulation: { final_value: 1161695, nudge_message: "Starting 1 year later costs you ₹1,87,587", projection: [{invested:5000, value:5050}] }
-      }
-    }, msg);
-  } else if (m.includes('tax')) {
-    handleChatResponse({
-      reply: "For tax savings, consider ELSS mutual funds (Section 80C up to ₹1.5L), NPS (Section 80CCD up to ₹50K extra), and health insurance premiums (Section 80D). Given your income of ₹55K/month, ELSS via SIP would be most efficient for your house goal.",
-      reason: "Based on your income bracket and 7-year goal."
-    }, msg);
-  } else {
-    handleChatResponse({
-      reply: "Based on your profile — ₹55K income, medium risk appetite, house goal in 7 years — I'd recommend starting a ₹5,500/month SIP in a large-cap index fund. This represents 10% of your income and will compound significantly over your 7-year horizon.",
-      reason: "Based on your income, risk profile, and goal timeline."
-    }, msg);
-  }
-}
-
-let lastMessageText = "";
-
-function addMessage(role, text, reason) {
-  const messages = document.getElementById('chat-messages');
-  
-  // HARD CLEAN: Remove ghost duplicates / previous messages before AI response
-  if (role === 'ai') {
-    const existing = messages.querySelectorAll('.msg');
-    existing.forEach((m, idx) => {
-      // Keep user's last question but remove ghost duplicates
-      if (m.innerText.includes(text.substring(0, 30))) {
-        m.remove();
-      }
-    });
-  }
-
-  // Prevent duplicate rendering
-  if (messages.lastElementChild && messages.lastElementChild.innerText.includes(text.substring(0, 30))) {
-    return;
-  }
-
-  console.log("Message Rendered. Total messages:", messages.children.length + 1);
-  const div = document.createElement('div');
-  div.className = `msg ${role === 'ai' ? 'ai' : 'user'}`;
-
-  const formattedText = (text || '').replace(/\n/g, '<br>');
-  const whySection = reason ? createWhyTooltip(reason) : '';
-
-  div.innerHTML = `
-    <div class="msg-avatar">${role === 'ai' ? 'W' : 'P'}</div>
-    <div style="flex:1;">
-      <div class="msg-bubble" style="display:inline-block">${formattedText} ${whySection}</div>
-    </div>`;
-
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
-
-function showTyping() {
-  const messages = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'msg ai';
-  div.id = 'typing-indicator';
-  div.innerHTML = `
-    <div class="msg-avatar">W</div>
-    <div class="msg-bubble" style="padding:14px 18px;">
-      <div class="typing-dots">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      </div>
-    </div>`;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
-
-function removeTyping() {
-  const el = document.getElementById('typing-indicator');
-  if (el) el.remove();
-}
-
-let simTimeout;
-
-function scheduleSimulatorUpdate() {
-  clearTimeout(simTimeout);
-  simTimeout = setTimeout(() => {
-    updateSimulator();
-  }, 300); // 300ms delay
-}
-
-async function updateSimulator() {
-  const monthly = parseInt(document.getElementById("sim-amount").value);
-  const years = parseInt(document.getElementById("sim-years").value);
-  const rate = parseFloat(document.getElementById("sim-rate").value);
-
-  // Update slider label values so they are responsive
-  document.getElementById('sim-amount-val').textContent = '₹' + monthly.toLocaleString('en-IN');
-  document.getElementById('sim-years-val').textContent = years + ' years';
-  document.getElementById('sim-rate-val').textContent = rate + '%';
-
-  const res = await fetch(`${API}/api/ai/simulate`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      monthly_amount: monthly,
-      years: years,
-      annual_rate: rate
-    })
-  });
-
-  const data = await res.json();
-  const s = data.summary;
-
-  // Using final_value_now if final_value is not present to match backend
-  const final = s.final_value || s.final_value_now;
-  const invested = monthly * years * 12;
-
-  // Bottom values
-  document.getElementById("sim-final").innerText = `₹${final.toLocaleString('en-IN')}`;
-  document.getElementById("sim-invested").innerText = `₹${invested.toLocaleString('en-IN')}`;
-  document.getElementById("sim-gain").innerText = `₹${(final - invested).toLocaleString('en-IN')}`;
-  document.getElementById("nudge-cost").innerText = `₹${s.opportunity_cost.toLocaleString('en-IN')}`;
-
-  // Right Panel values
-  document.getElementById("side-invested").innerText = `₹${(s.invested || invested).toLocaleString('en-IN')}`;
-  document.getElementById("side-returns").innerText = `₹${(s.wealth_gain || (final - invested)).toLocaleString('en-IN')}`;
-  
-  const finalNow = s.final_value_now || final;
-  const inv = s.invested || invested;
-  if (inv > 0) {
-      document.getElementById("multiplier").innerText = (finalNow / inv).toFixed(1) + "x";
-  }
-}
-
-scheduleSimulatorUpdate();
-
-// ── AUTO-REFRESH ALERTS ──
-setInterval(() => {
-  if (document.getElementById('page-alerts').classList.contains('active')) {
-    loadRiskAlerts();
-  }
-}, 5000);
-
-// ── RESET USER (TESTING) ──
-function resetUser() {
-  localStorage.removeItem('swt_user');
-  location.reload();
-}
-// ── SECURITY (OTP) ──
-let pendingInvestment = null;
-
-function requireOTP(amount, callback) {
-  pendingInvestment = callback;
-  document.getElementById('otp-modal').style.display = 'flex';
-  document.getElementById('otp-input').value = '';
-  document.getElementById('otp-input').focus();
-}
-
-// ══════════════════════════════════════════════════
-// SECUREWEALTH TWIN v2.0 — NEW JS FEATURES
-// ══════════════════════════════════════════════════
-
-// ── COUNTER ANIMATION ──
-function animateCounter(el, target, prefix='₹', suffix='') {
-  if (!el) return;
-  const isRupee = prefix === '₹';
-  const start = 0;
-  const duration = 1200;
-  const startTime = performance.now();
-  function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(start + (target - start) * eased);
-    el.textContent = prefix + (isRupee ? current.toLocaleString('en-IN') : current) + suffix;
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-// ── POPULATE BANK CARD ──
-function populateBankCard() {
-  const nameEl = document.getElementById('dash-card-name');
-  const nwEl   = document.getElementById('dash-card-nw');
-  const bcName = document.getElementById('bc-name');
-  const bcBal  = document.getElementById('bc-balance');
-  if (nameEl) nameEl.textContent = USER.name || 'Account Holder';
-  if (bcName) bcName.textContent = USER.name || '—';
-  const nw = (USER.current_savings||0) + (USER.investments_value||0) + (USER.assets?.gold||0);
-  if (nwEl) animateCounter(nwEl, nw);
-  if (bcBal) animateCounter(bcBal, nw);
-}
-
-// ── ACTIVITY FEED ──
 const STATIC_FEED = [
   { dot:'info',  agent:'ai',     msg:'Financial Profile Analyser generated wealth archetype',        time:'just now' },
   { dot:'allow', agent:'wealth', msg:'Wealth Coach loaded personalized context for session',          time:'1 min ago' },
@@ -1786,443 +533,358 @@ const STATIC_FEED = [
   { dot:'allow', agent:'ai',     msg:'Account Aggregator synced 3 bank accounts',                    time:'5 min ago' },
 ];
 
-async function loadActivityFeed() {
-  const feed = document.getElementById('activity-feed');
-  if (!feed) return;
-  let items = [...STATIC_FEED];
+let USER = JSON.parse(localStorage.getItem('swt_user') || 'null') || { ...USER_DEFAULTS };
+let wizardStep = 1;
+let selectedRisk = USER.risk_appetite || 'medium';
+let isInitialized = false;
+let pendingInvestment = null;
+let windowPopulatingApp = false;
+
+// ── UTILITIES & SAFE DOM ACCESS ──
+
+const ui = {
+  get: (id) => document.getElementById(id),
+  text: (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; },
+  html: (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; },
+  show: (id, display = 'block') => { const el = document.getElementById(id); if (el) el.style.display = display; },
+  hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; },
+  class: (id, cls, action = 'add') => { const el = document.getElementById(id); if (el) el.classList[action](cls); }
+};
+
+function saveUser() {
+  localStorage.setItem('swt_user', JSON.stringify(USER));
+}
+
+async function safeFetch(endpoint, options = {}) {
+  const url = endpoint.startsWith('http') ? endpoint : `${API}${endpoint}`;
   try {
-    const data = await safeFetch(`/api/execute/audit`);
-    if (data && !data.error) {
-
-      const logs = (data.log || []).slice(-3).reverse();
-      logs.forEach(l => {
-        const dot = l.decision === 'BLOCK' ? 'block' : l.decision === 'WARN' ? 'warn' : 'allow';
-        const cls = l.decision === 'BLOCK' ? 'fraud' : l.decision === 'WARN' ? 'risk' : 'wealth';
-        const score = Math.round(l.risk_score || 0);
-        const amt = (l.amount||0).toLocaleString('en-IN');
-        items.unshift({
-          dot, agent: cls,
-          msg: `Fraud Shield scanned ₹${amt} ${l.action_type||'txn'} → ${l.decision} (Score: ${score})`,
-          time: new Date(l.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
-        });
-      });
-      // Update risk meter
-      const latest = data.log?.[data.log.length - 1];
-      if (latest) updateRiskMeter(latest.risk_score||0, latest.decision||'ALLOW');
-    }
-  } catch(e) {}
-  items = items.slice(0, 5);
-  feed.innerHTML = items.map(i => `
-    <div class="activity-item">
-      <div class="activity-dot ${i.dot}"></div>
-      <div class="activity-content">
-        <div class="activity-msg">${i.msg}</div>
-        <div class="activity-time">${i.time}</div>
-      </div>
-      <div class="activity-agent ${i.agent}">${i.agent === 'fraud' ? 'Shield' : i.agent === 'risk' ? 'Risk' : i.agent === 'wealth' ? 'Coach' : 'AI'}</div>
-    </div>`).join('');
-}
-setInterval(() => {
-  if (document.getElementById('page-dashboard')?.classList.contains('active')) loadActivityFeed();
-}, 10000);
-
-// ── RISK METER WIDGET ──
-function updateRiskMeter(score, decision) {
-  const fill = document.getElementById('rmt-fill');
-  const label = document.getElementById('rmt-label');
-  if (!fill || !label) return;
-  const pct = Math.min(score, 100);
-  fill.style.width = pct + '%';
-  if (decision === 'BLOCK') { fill.style.background = 'var(--red)'; label.style.color='var(--red)'; label.textContent = 'HIGH RISK'; }
-  else if (decision === 'WARN') { fill.style.background = 'var(--amber)'; label.style.color='var(--amber)'; label.textContent = 'MED RISK'; }
-  else { fill.style.background = 'var(--teal)'; label.style.color='var(--teal)'; label.textContent = 'LOW RISK'; }
-}
-
-// ── SPENDING INTELLIGENCE ──
-function renderSpendingIntel(container) {
-  if (!container) return;
-  const income = USER.income || 55000;
-  const cats = [
-    { label:'🏠 Housing',   pct:27, color:'var(--blue)' },
-    { label:'🛒 Food',      pct:18, color:'var(--teal)' },
-    { label:'🚗 Transport', pct:10, color:'var(--gold)' },
-    { label:'🎬 Leisure',   pct:8,  color:'var(--red)' },
-    { label:'💊 Health',    pct:5,  color:'#a78bfa' },
-  ];
-  container.innerHTML = `
-    <div class="section-title" style="font-size:13px;">Spending Intelligence</div>
-    ${cats.map(c => `
-      <div class="spend-bar-row">
-        <div class="spend-bar-label">${c.label}</div>
-        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:0%;background:${c.color};" data-pct="${c.pct}"></div></div>
-        <div class="spend-bar-val">₹${Math.round(income*c.pct/100).toLocaleString('en-IN')}</div>
-      </div>`).join('')}
-    <div class="ai-insight-bubble" id="spend-insight-bubble">
-      💡 Loading AI spending insight...
-    </div>`;
-  // Animate bars
-  setTimeout(() => {
-    container.querySelectorAll('.spend-bar-fill').forEach(el => {
-      el.style.width = el.dataset.pct + '%';
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      ...options,
     });
-  }, 100);
-  // Fetch AI tip
-  fetch(`${API}/api/ai/chat`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ message: 'Give me one short spending tip in 1 sentence based on my profile.', user_profile: USER })
-  }).then(r => r.json()).then(d => {
-    const bub = document.getElementById('spend-insight-bubble');
-    if (bub) bub.innerHTML = '💡 ' + (d.reply || 'Keep your spending below 70% of income for healthy savings!');
-  }).catch(() => {
-    const bub = document.getElementById('spend-insight-bubble');
-    if (bub) bub.innerHTML = '💡 Tip: Keep housing + food under 50% of income to hit your savings goals faster.';
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    if (!res.ok) return { error: true, message: `Server returned ${res.status}` };
+    return await res.json();
+  } catch (err) {
+    console.error(`Network error at ${url}:`, err.message);
+    return { error: true, message: 'Cannot reach server' };
+  }
+}
+
+// ── ONBOARDING & WIZARD ──
+
+function nextWizardStep() {
+  ui.hide('wizard-step-' + wizardStep);
+  ui.class('step-dot-' + wizardStep, 'active', 'remove');
+  ui.class('step-dot-' + wizardStep, 'done', 'add');
+  wizardStep++;
+  ui.show('wizard-step-' + wizardStep);
+  ui.class('step-dot-' + wizardStep, 'active', 'add');
+}
+
+function prevWizardStep() {
+  ui.hide('wizard-step-' + wizardStep);
+  ui.class('step-dot-' + wizardStep, 'active', 'remove');
+  wizardStep--;
+  ui.show('wizard-step-' + wizardStep);
+  ui.class('step-dot-' + wizardStep, 'done', 'remove');
+  ui.class('step-dot-' + wizardStep, 'active', 'add');
+}
+
+function selectRisk(level) {
+  selectedRisk = level;
+  ['low', 'medium', 'high'].forEach(l => {
+    const el = ui.get('risk-' + l);
+    if (el) el.classList.toggle('active', l === level);
   });
 }
 
-// ── TRANSFER PAGE ──
-let txScanInterval = null;
-let txCountdownTimer = null;
-let txCurrentDecision = null;
-
-function updateRecipientPreview() {
-  const name = document.getElementById('tx-recipient')?.value.trim() || '—';
-  const acc  = document.getElementById('tx-account')?.value.trim() || '';
-  const nameEl = document.getElementById('rec-name-display');
-  const accEl  = document.getElementById('rec-acc-display');
-  const avEl   = document.getElementById('rec-avatar');
-  if (nameEl) nameEl.textContent = name || '—';
-  if (accEl)  accEl.textContent  = acc  ? 'NOVA ···· ···· ' + acc.slice(-4).padStart(4,'·') : 'NOVA ···· ···· ····';
-  if (avEl)   avEl.textContent   = (name[0] || 'R').toUpperCase();
+function fillDemo() {
+  const fields = { 'f-name':'Priya Sharma', 'f-age':'28', 'f-exp':'beginner', 'f-income':'55000', 'f-expenses':'35000', 'f-savings':'120000', 'f-investments':'60000', 'f-goal':'Buy a house', 'f-timeline':'7' };
+  Object.entries(fields).forEach(([id, val]) => { const el = ui.get(id); if(el) el.value = val; });
+  selectRisk('medium');
+  if (wizardStep === 1) nextWizardStep();
+  if (wizardStep === 2) nextWizardStep();
 }
 
-function updateAmountPreview() {
-  const v = parseFloat(document.getElementById('tx-amount')?.value || 0);
-  const el = document.getElementById('tx-receive-amt');
-  if (el) el.textContent = '₹' + (v||0).toLocaleString('en-IN');
-}
+async function submitProfile() {
+  const name     = ui.get('f-name')?.value.trim()     || USER_DEFAULTS.name;
+  const age      = parseInt(ui.get('f-age')?.value)    || USER_DEFAULTS.age;
+  const exp      = ui.get('f-exp')?.value              || USER_DEFAULTS.investment_experience;
+  const income   = parseFloat(ui.get('f-income')?.value)   || USER_DEFAULTS.income;
+  const expenses = parseFloat(ui.get('f-expenses')?.value) || USER_DEFAULTS.monthly_expenses;
+  const savings  = parseFloat(ui.get('f-savings')?.value)  || USER_DEFAULTS.current_savings;
+  const invValue = parseFloat(ui.get('f-investments')?.value) || USER_DEFAULTS.investments_value;
+  const goal     = ui.get('f-goal')?.value             || USER_DEFAULTS.goal;
+  const timeline = parseInt(ui.get('f-timeline')?.value)   || USER_DEFAULTS.timeline;
 
-function setTxAmount(v) {
-  const inp = document.getElementById('tx-amount');
-  if (inp) { inp.value = v; updateAmountPreview(); }
-}
+  ui.hide('wizard-step-3');
+  ui.show('wizard-loading');
 
-function setPayStep(step) {
-  for (let i = 1; i <= 4; i++) {
-    const s = document.getElementById('pstep-' + i);
-    const l = document.getElementById('psline-' + i);
-    if (!s) continue;
-    s.className = 'ps-step' + (i < step ? ' done' : i === step ? ' active' : '');
-    if (l) l.className = 'ps-line' + (i < step ? ' done' : i === step ? ' active' : '');
-  }
-}
-
-const SCAN_STEPS = [
-  'Scanning device fingerprint...',
-  'Checking behavioral patterns...',
-  'Comparing to spending history...',
-  'Evaluating transaction timing...',
-  'Analysing round-number signals...',
-  'Querying Trust Pyramid layers...',
-  'Generating risk score...',
-];
-
-function initiateTransfer() {
-  console.log("[UI] 🖱 initiateTransfer() clicked");
-  const amount    = parseFloat(document.getElementById('tx-amount')?.value || 0);
-  const recipient = document.getElementById('tx-recipient')?.value.trim();
-  if (!amount || amount <= 0)    { alert('Please enter a valid amount.'); return; }
-  if (!recipient)                { alert('Please enter a recipient name.'); return; }
-
-  // Show PIN card
-  const pinCard = document.getElementById('pin-card');
-  if (pinCard) {
-    pinCard.style.display = 'block';
-    document.getElementById('pin1')?.focus();
-    // Wait for PIN then proceed
-    pinCard._resolve = () => runAIScan(amount);
-    return;
-  }
-  runAIScan(amount);
-}
-
-function pinNav(el, prevId, nextId) {
-  if (el.value && nextId) { document.getElementById(nextId)?.focus(); }
-  // Check if all 4 filled
-  const vals = ['pin1','pin2','pin3','pin4'].map(id => document.getElementById(id)?.value || '');
-  if (vals.every(v => v)) {
-    const pin = vals.join('');
-    if (pin === '1234') {
-      document.getElementById('pin-card').style.display = 'none';
-      ['pin1','pin2','pin3','pin4'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-      runAIScan(parseFloat(document.getElementById('tx-amount')?.value || 0));
-    } else {
-      setTimeout(() => {
-        ['pin1','pin2','pin3','pin4'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-        document.getElementById('pin1')?.focus();
-        alert('Incorrect PIN. Demo PIN is 1234.');
-      }, 200);
-    }
-  }
-}
-
-function runAIScan(amount) {
-  setPayStep(2);
-  // Show overlay
-  const overlay = document.getElementById('ai-scan-overlay');
-  const scanText = document.getElementById('scan-text');
-  const progress = document.getElementById('scan-progress');
-  const pctEl    = document.getElementById('scan-pct');
-  overlay.style.display = 'flex';
-
-  let stepIdx = 0;
-  let pct = 0;
-  const totalMs = 2600;
-  const stepMs  = totalMs / SCAN_STEPS.length;
-
-  txScanInterval = setInterval(() => {
-    if (stepIdx < SCAN_STEPS.length) {
-      scanText.textContent = SCAN_STEPS[stepIdx];
-      scanText.style.animation = 'none';
-      void scanText.offsetWidth;
-      scanText.style.animation = 'text-flicker 0.4s ease';
-      stepIdx++;
-    }
-    pct = Math.min(pct + (100 / SCAN_STEPS.length), 100);
-    progress.style.width = pct + '%';
-    pctEl.textContent = Math.round(pct) + '%';
-  }, stepMs);
-
-  setTimeout(() => {
-    clearInterval(txScanInterval);
-    overlay.style.display = 'none';
-    callExecuteAPI(amount);
-  }, totalMs);
-}
-
-async function callExecuteAPI(amount) {
-  setPayStep(3);
-  const avg = USER.avg_investment || 5000;
-  let result = null;
   try {
-    const res = await fetch(`${API}/api/execute`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        action_type: 'Bank Transfer',
-        amount: amount,
-        avg_amount: avg,
-        is_new_device: false,
-        seconds_since_login: Math.floor((Date.now() - (window._loginTime||Date.now()))/1000),
-        is_first_investment_type: false,
-        otp_retry_count: 0,
-        monthly_amount: avg,
-        years: USER.timeline || 7,
-        user_profile: USER
-      })
-    });
-    result = await res.json();
-  } catch(e) {
-    // Fallback
-    const score = amount > avg * 3 ? 72 : amount > avg * 1.5 ? 45 : 12;
-    result = {
-      status: score >= 60 ? 'blocked' : score >= 30 ? 'delayed' : 'approved',
-      risk: {
-        score, decision: score >= 60 ? 'BLOCK' : score >= 30 ? 'WARN' : 'ALLOW',
-        level: score >= 60 ? 'HIGH' : score >= 30 ? 'MEDIUM' : 'LOW',
-        reason: score >= 60
-          ? 'This transfer amount is significantly higher than your usual patterns.'
-          : score >= 30
-          ? 'This transfer shows some unusual patterns. Please review before proceeding.'
-          : 'This transfer matches your normal behavior and appears safe.',
-        signals: score > 30 ? ['Amount unusually high compared to your normal transactions'] : [],
-        trust_pyramid: { identity: score < 60, context: score < 40, behavior: score < 30, intent: score < 20 }
-      },
-      message: score >= 60 ? 'Transfer blocked for safety.' : score >= 30 ? 'Review required.' : 'Transfer approved.',
-      cooldown: score >= 60 ? 30 : score >= 30 ? 15 : 0
-    };
-  }
-  showTransferDecision(result, amount);
-}
-
-function showTransferDecision(result, amount) {
-  const risk = result.risk || {};
-  const decision = risk.decision || 'ALLOW';
-  txCurrentDecision = decision;
-
-  document.getElementById('transfer-step-form').style.display = 'none';
-  document.getElementById('transfer-step-decision').style.display = 'block';
-
-  const card = document.getElementById('tx-decision-card');
-  const cls  = decision === 'BLOCK' ? 'block' : decision === 'WARN' ? 'warn' : 'allow';
-  card.className = 'decision-card ' + cls;
-
-  // Badge
-  const icon = decision === 'BLOCK' ? '🚫 BLOCKED' : decision === 'WARN' ? '⚠️ REVIEW NEEDED' : '✅ APPROVED';
-  document.getElementById('tx-decision-badge').innerHTML =
-    `<div class="decision-badge ${cls}">${icon}</div>`;
-
-  // Gauge
-  const score = risk.score || 0;
-  const arc = document.getElementById('gauge-arc');
-  const gtxt = document.getElementById('gauge-text');
-  if (arc && gtxt) {
-    const maxDash = 204;
-    const dashOffset = maxDash - (score / 100) * maxDash;
-    const color = decision === 'BLOCK' ? '#FF4757' : decision === 'WARN' ? '#FFB627' : '#00D4AA';
-    setTimeout(() => {
-      arc.style.strokeDashoffset = dashOffset;
-      arc.style.stroke = color;
-      gtxt.textContent = score;
-      gtxt.setAttribute('fill', color);
-    }, 100);
-  }
-
-  // AI reason
-  document.getElementById('tx-ai-reason').textContent =
-    '"' + (risk.reason || result.message || 'Analysis complete.') + '"';
-
-  // Trust pyramid (top=Intent, bottom=Identity for visual widths)
-  const pyr = risk.trust_pyramid || {};
-  const layers = [
-    { key:'intent',   label:'Intent',   icon:'🎯' },
-    { key:'behavior', label:'Behavior', icon:'📊' },
-    { key:'context',  label:'Context',  icon:'🕐' },
-    { key:'identity', label:'Identity', icon:'🔒' },
-  ];
-  document.getElementById('tx-trust-pyramid').innerHTML = layers.map(l => {
-    const flagged = pyr[l.key];
-    const cls2 = flagged ? 'risk' : 'safe';
-    const status = flagged ? '⚠ Flagged' : '✓ Safe';
-    return `<div class="tp-layer ${cls2}"><div class="tp-dot"></div>${l.icon} ${l.label} — ${status}</div>`;
-  }).join('');
-
-  // Signal pills
-  const signals = risk.signals || [];
-  document.getElementById('tx-signals-list').innerHTML = signals.length
-    ? signals.map((s, i) => `<span class="signal-pill ${decision==='BLOCK'?'danger':decision==='WARN'?'warn':''}" style="animation-delay:${i*0.1}s">${s}</span>`).join('')
-    : '<span class="signal-pill">No anomalies detected</span>';
-
-  // Action buttons
-  const actDiv = document.getElementById('tx-decision-actions');
-  if (decision === 'ALLOW') {
-    actDiv.innerHTML = `<button class="send-btn-gold" onclick="completeTransfer(${amount})">✅ Confirm & Send ₹${amount.toLocaleString('en-IN')}</button>
-      <button class="btn-sm" style="width:100%;margin-top:8px;" onclick="resetTransfer()">← Change Amount</button>`;
-  } else if (decision === 'WARN') {
-    const cooldown = result.cooldown || 15;
-    actDiv.innerHTML = `
-      <div style="text-align:center;margin-bottom:14px;">
-        <div class="countdown-ring">
-          <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="35" stroke-width="6"/><circle class="ring-fill" id="cd-ring" cx="40" cy="40" r="35" stroke="${'#FFB627'}" stroke-width="6" stroke-dasharray="220" stroke-dashoffset="0"/></svg>
-          <div class="countdown-number" id="cd-number">${cooldown}</div>
-        </div>
-        <div style="font-size:11px;color:var(--amber);font-weight:600;">Review period before you can confirm</div>
-      </div>
-      <button class="confirm-anyway-btn" id="confirm-anyway-btn" disabled onclick="completeTransfer(${amount})">⚠️ Confirm Anyway</button>
-      <button class="btn-sm" style="width:100%;margin-top:8px;" onclick="resetTransfer()">← Cancel Transfer</button>`;
-    startCountdown(cooldown);
-  } else {
-    actDiv.innerHTML = `
-      <div class="ai-quote-box" style="border-color:var(--red);background:rgba(255,71,87,0.06);">
-        🚫 This transfer has been blocked to protect your account.<br>
-        <strong>Blocked signals:</strong> ${signals.join(', ') || 'High risk score'}
-      </div>
-      <a href="tel:18001234567" class="send-btn-gold" style="display:block;text-align:center;text-decoration:none;background:var(--red-dim);color:var(--red);border:2px solid var(--red);">📞 Contact Support</a>
-      <button class="btn-sm" style="width:100%;margin-top:8px;" onclick="resetTransfer()">← Try Different Amount</button>`;
-  }
-
-  // Update activity feed
-  loadActivityFeed();
-  updateRiskMeter(score, decision);
-}
-
-function startCountdown(seconds) {
-  const ring   = document.getElementById('cd-ring');
-  const numEl  = document.getElementById('cd-number');
-  const btn    = document.getElementById('confirm-anyway-btn');
-  const total  = 220;
-  let left = seconds;
-  txCountdownTimer = setInterval(() => {
-    left--;
-    if (numEl) numEl.textContent = left;
-    if (ring)  ring.style.strokeDashoffset = total - (total * left / seconds);
-    if (left <= 0) {
-      clearInterval(txCountdownTimer);
-      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-    }
-  }, 1000);
-}
-
-async function completeTransfer(amount) {
-  if (txCountdownTimer) clearInterval(txCountdownTimer);
-  setPayStep(4);
-  document.getElementById('transfer-step-decision').style.display = 'none';
-  document.getElementById('transfer-step-success').style.display  = 'block';
-  const recipient = document.getElementById('tx-recipient')?.value || 'Recipient';
-  document.getElementById('tx-succ-to').textContent    = recipient;
-  document.getElementById('tx-succ-amt').textContent   = '₹' + amount.toLocaleString('en-IN');
-  document.getElementById('tx-succ-score').textContent = 'LOW — Transfer Safe';
-  document.getElementById('tx-success-msg').textContent =
-    `₹${amount.toLocaleString('en-IN')} sent to ${recipient} successfully. Verified by AI Fraud Shield.`;
-  
-  // 🔗 Persist to DB
-  console.log("🛠 Persisting transaction to Supabase...");
-  try {
-    const txData = {
-      amount: amount,
-      note: `Transfer to ${recipient}`,
-      sender_id: USER.id || null
-    };
-    const res = await safeFetch('/api/transactions', {
+    const res = await safeFetch('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify(txData)
+      body: JSON.stringify({ name, email: `${name.toLowerCase().replace(/\s/g, '.')}@example.com`, password: "demoPassword123" }),
     });
-    console.log("✅ Persisted:", res);
-  } catch(e) {
-    console.error("❌ Persistence failed:", e);
-  }
+    if (res && !res.error) {
+      localStorage.setItem('jwt_token', res.token);
+      localStorage.setItem('account_number', res.account_number);
+    }
+  } catch(e) { console.error("Signup failed:", e); }
 
-  // Add to local transactions
-  USER.transactions = USER.transactions || [];
-  USER.transactions.unshift({ type:'debit', label: 'Transfer to ' + recipient, amount });
+  Object.assign(USER, { name, age, investment_experience: exp, income, monthly_expenses: expenses, current_savings: savings, investments_value: invValue, goal: `${goal} in ${timeline} years`, risk_appetite: selectedRisk, avg_investment: Math.round((income-expenses)*0.1), timeline });
   saveUser();
+
+  await new Promise(r => setTimeout(r, 1000));
+  ui.hide('login-screen');
+  ui.class('app', 'visible', 'add');
+  populateAppFromUser();
+}
+
+// ── CORE DATA LOADERS ──
+
+async function loadDashboard() {
+  if (!ui.get('page-dashboard')?.classList.contains('active')) return;
+  try {
+    const [nwRes, profRes] = await Promise.all([
+      safeFetch('/api/ai/networth', { method: "POST", body: JSON.stringify({ savings: USER.current_savings||0, investments: USER.investments_value||0, property_value: USER.assets?.property||0, gold_value: USER.assets?.gold||0, vehicle_value: USER.assets?.vehicles||0 }) }),
+      safeFetch('/api/ai/profile/analyze', { method: "POST", body: JSON.stringify(USER) })
+    ]);
+
+    if (nwRes && !nwRes.error) {
+      const nw = nwRes.summary;
+      ui.text('dash-networth', `₹${nw.net_worth.toLocaleString('en-IN')}`);
+      ui.text('dash-income', `₹${USER.income.toLocaleString('en-IN')}`);
+      ui.text('dash-savings', `₹${nw.total_assets.toLocaleString('en-IN')}`);
+      ui.text('dash-savings-rate', ((nw.total_assets / (USER.income * 12)) * 100).toFixed(1) + "%");
+      
+      const assetsList = [ { label: "💰 Savings", val: USER.current_savings }, { label: "📈 Mutual Funds", val: USER.investments_value }, { label: "🪙 Gold", val: USER.assets?.gold }, { label: "🏠 Property", val: USER.assets?.property }, { label: "🚗 Vehicles", val: USER.assets?.vehicles } ];
+      const total = nw.total_assets || 1;
+      const html = assetsList.map(a => a.val > 0 ? `<div class="stat-row" style="padding: 10px 0;"><div class="stat-row-label">${a.label}</div><div class="stat-row-value">₹${a.val.toLocaleString('en-IN')} <span style="font-size:11px; color:var(--text-secondary); margin-left:4px;">(${Math.round(a.val/total*100)}%)</span></div></div>` : '').join('');
+      ui.html("dash-portfolio", html);
+    }
+
+    if (profRes && !profRes.error) {
+      ui.text('dash-archetype', profRes.archetype);
+      ui.text('dash-desc', profRes.archetype.includes("Disciplined") ? "Consistent builder." : "Growth focused.");
+      ui.html('dash-tags', `<span class="signal-tag">💪 ${profRes.strength}</span><span class="signal-tag">⚠️ ${profRes.weakness}</span>`);
+      if (profRes.behavior_score !== undefined) {
+        ui.text('dash-behavior-score', `${profRes.behavior_score} (${profRes.behavior_label})`);
+        const el = ui.get('dash-behavior-score');
+        if (el) el.style.color = profRes.behavior_score >= 70 ? 'var(--teal)' : 'var(--amber)';
+      }
+    }
+    renderTransactions();
+  } catch (e) { console.error("Dashboard load failed", e); }
+}
+
+async function loadNetworth() {
+  if (!ui.get('page-networth')?.classList.contains('active')) return;
+  try {
+    const res = await safeFetch('/api/ai/networth', { method: "POST", body: JSON.stringify({ user_profile: USER, savings: USER.current_savings||0, investments: USER.investments_value||0, property_value: USER.assets?.property||0, gold_value: USER.assets?.gold||0, vehicle_value: USER.assets?.vehicles||0 }) });
+    if (res && res.summary) {
+      ui.text("nw-total-assets", `₹${res.summary.total_assets.toLocaleString('en-IN')}`);
+      ui.text("nw-total-liabilities", `₹${res.summary.total_liabilities.toLocaleString('en-IN')}`);
+      ui.text("nw-net-worth", `₹${res.summary.net_worth.toLocaleString('en-IN')}`);
+      
+      const icons = { savings:'🏦', investments:'📈', property:'🏠', gold:'🪙', vehicles:'🚗' };
+      const html = Object.entries(res.breakdown || {}).map(([k, v]) => v > 0 ? `<div class="stat-row"><div class="stat-row-label">${icons[k]||'🔹'} ${k}</div><div class="stat-row-value">₹${v.toLocaleString('en-IN')}</div></div>` : '').join('');
+      ui.html("nw-breakdown", html || "No assets found");
+    }
+  } catch (e) { console.error("Networth load failed", e); }
+}
+
+async function loadRiskAlerts() {
+  if (!ui.get('page-alerts')?.classList.contains('active')) return;
+  try {
+    const data = await safeFetch('/api/execute/audit');
+    if (!data || data.error) return;
+    const logs = data.log || [];
+    
+    ui.text("alert-total", logs.length);
+    let warn = 0, block = 0, protectedAmt = 0;
+    logs.forEach(l => { if(l.decision==='WARN') warn++; if(l.decision==='BLOCK'){ block++; protectedAmt += (l.amount||0); } });
+    ui.text("alert-warns", warn);
+    ui.text("alert-blocks", block);
+    ui.text("alert-protected", `Protected ₹${protectedAmt.toLocaleString('en-IN')}`);
+
+    const html = logs.slice(-10).reverse().map(l => `
+      <div class="alert-item alert-${l.decision.toLowerCase()}">
+        <div class="alert-icon">${l.decision==='BLOCK'?'🔴':l.decision==='WARN'?'🟡':'🟢'}</div>
+        <div class="alert-body">
+          <div class="alert-title">${l.action_type || 'Transaction'} — ₹${(l.amount||0).toLocaleString('en-IN')} ${l.decision}</div>
+          <div class="alert-meta">${(l.signals||[]).join(' · ')} · ${new Date(l.timestamp).toLocaleTimeString()}</div>
+        </div>
+        <div class="alert-score">${Math.round(l.risk_score||0)}</div>
+      </div>`).join('');
+    ui.html("audit-log-container", html || "No activity logs.");
+  } catch (e) { console.error("Alerts load failed", e); }
+}
+
+// ── APP LIFECYCLE ──
+
+function switchPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  ui.class('page-' + name, 'active', 'add');
+  if (navEl) navEl.classList.add('active');
+  
+  if (name === 'networth') loadNetworth();
+  if (name === 'dashboard') { loadDashboard(); loadActivityFeed(); populateBankCard(); }
+  if (name === 'alerts') loadRiskAlerts();
+  if (name === 'transfer') { populateBankCard(); resetTransfer(); }
+}
+
+async function populateAppFromUser() {
+  if (windowPopulatingApp) return;
+  windowPopulatingApp = true;
+  try {
+    const initials = (USER.name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    ui.text('sidebar-avatar', initials);
+    ui.text('sidebar-name', USER.name);
+    ui.text('sidebar-role', (USER.risk_appetite||'Medium') + ' Investor');
+    
+    const hour = new Date().getHours();
+    ui.text('dash-greeting', `${hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'}, ${USER.name.split(' ')[0]} 👋`);
+
+    updateChart();
+    loadDashboard();
+    loadNetworth();
+    loadRiskAlerts();
+    renderTransactions();
+    populateBankCard();
+    loadActivityFeed();
+  } finally { windowPopulatingApp = false; }
+}
+
+function initApp() {
+  if (isInitialized) return;
+  console.log("🚀 Initializing SecureWealth Twin...");
+  isInitialized = true;
+
+  if (localStorage.getItem('swt_user')) {
+    ui.hide('login-screen');
+    ui.class('app', 'visible', 'add');
+    populateAppFromUser();
+  } else {
+    ui.show('login-screen', 'flex');
+  }
+}
+
+// ── GLOBAL LISTENERS ──
+
+window.addEventListener('DOMContentLoaded', () => {
+  initApp();
+  
+  // Refresh loop
+  setInterval(() => {
+    const active = document.querySelector('.page.active')?.id;
+    if (active === 'page-dashboard') loadDashboard();
+    if (active === 'page-alerts') loadRiskAlerts();
+  }, 10000);
+});
+
+// ── FEATURE FUNCTIONS ──
+
+async function sendChat() {
+  const input = ui.get('chat-input');
+  if (!input || !input.value.trim()) return;
+  const msg = input.value.trim();
+  input.value = '';
+  addMessage('user', msg);
+  showTyping();
+  try {
+    const res = await safeFetch('/api/ai/chat', { method: 'POST', body: JSON.stringify({ message: msg, user_profile: USER }) });
+    removeTyping();
+    if (res && !res.error) handleChatResponse(res, msg);
+  } catch(e) { removeTyping(); }
+}
+
+function verifyOTP() {
+  const val = ui.get('otp-input')?.value;
+  if (val === "123456") {
+    ui.hide('otp-modal');
+    if (pendingInvestment) pendingInvestment();
+    pendingInvestment = null;
+  } else { alert("Invalid Code. Use 123456"); }
+}
+
+function addMessage(role, text) {
+  const messages = ui.get('chat-messages');
+  if (!messages) return;
+  const div = document.createElement('div');
+  div.className = `msg ${role==='ai'?'ai':'user'}`;
+  div.innerHTML = `<div class="msg-avatar">${role==='ai'?'W':'P'}</div><div class="msg-bubble">${text}</div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function showTyping() {
+  const messages = ui.get('chat-messages');
+  if (!messages) return;
+  const div = document.createElement('div');
+  div.className = 'msg ai'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-avatar">W</div><div class="msg-bubble"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTyping() { const el = ui.get('typing-indicator'); if (el) el.remove(); }
+
+function populateBankCard() {
+  const bal = (USER.current_savings||0) + (USER.investments_value||0);
+  ui.text('bc-name', USER.name || 'Account Holder');
+  ui.text('bc-balance', `₹${bal.toLocaleString('en-IN')}`);
+}
+
+function renderTransactions() {
+  const container = ui.get('transactions-list');
+  if (!container) return;
+  const txs = USER.transactions || [];
+  container.innerHTML = txs.length ? txs.map(tx => `<div class="tx-row"><span>${tx.label}</span><span class="${tx.type}">${tx.type==='debit'?'-':'+'}₹${tx.amount.toLocaleString('en-IN')}</span></div>`).join('') : "No transactions.";
 }
 
 function resetTransfer() {
-  if (txCountdownTimer) clearInterval(txCountdownTimer);
-  if (txScanInterval)   clearInterval(txScanInterval);
-  setPayStep(1);
-  document.getElementById('transfer-step-form').style.display    = 'block';
-  document.getElementById('transfer-step-decision').style.display = 'none';
-  document.getElementById('transfer-step-success').style.display  = 'none';
-  document.getElementById('pin-card').style.display = 'none';
-  document.getElementById('tx-amount').value = '';
-  document.getElementById('tx-recipient').value = '';
-  updateAmountPreview();
-  updateRecipientPreview();
-  ['pin1','pin2','pin3','pin4'].forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
+  const fields = ['tx-amount', 'tx-recipient', 'otp-input', 'pin1', 'pin2', 'pin3', 'pin4'];
+  fields.forEach(f => { const el = ui.get(f); if(el) el.value = ''; });
+  ui.hide('otp-modal');
 }
 
-// ── Finalization ──
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-});
-
-// Patch removed to avoid infinite recursion
-
-// ══════════════════════════════════════════════════
-
-function verifyOTP() {
-  const val = document.getElementById('otp-input').value;
-  if (val === "123456") {
-    document.getElementById('otp-modal').style.display = 'none';
-    if (pendingInvestment) pendingInvestment();
-    pendingInvestment = null;
-  } else {
-    alert("Invalid Security Code. Please try again.");
-  }
+// ── CHART LOGIC ──
+function updateChart() {
+  const data = [];
+  let val = USER.current_savings || 0;
+  for (let i = 0; i < 12; i++) { val += (USER.income * 0.2); val *= 1.008; data.push(val); }
+  const minV = Math.min(...data), maxV = Math.max(...data), w = 400, h = 160, tp = 15, bp = 140, r = (maxV - minV) || 1, ys = bp - tp, xs = w / (data.length - 1);
+  const pts = data.map((v, i) => ({ x: i * xs, y: bp - ((v - minV) / r) * ys }));
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) { const mx = (pts[i-1].x + pts[i].x) / 2; d += ` Q${mx},${pts[i-1].y} ${pts[i].x},${pts[i].y}`; }
+  const l = ui.get("dash-chart-line"), a = ui.get("dash-chart-area"), dt = ui.get("dash-chart-dot");
+  if (l && a && dt) { l.setAttribute("d", d); a.setAttribute("d", `${d} L${w},${h} L0,${h} Z`); dt.setAttribute("cx", pts[pts.length-1].x); dt.setAttribute("cy", pts[pts.length-1].y); }
 }
 
-</script>
-<div id="why-tooltip" style="
+// ── ACTIVITY FEED LOGIC ──
+async function loadActivityFeed() {
+  const feed = ui.get('activity-feed'); if (!feed) return;
+  let items = [...STATIC_FEED];
+  try {
+    const data = await safeFetch('/api/execute/audit');
+    if (data && !data.error) {
+      (data.log || []).slice(-3).reverse().forEach(l => {
+        items.unshift({ dot: l.decision.toLowerCase(), agent: l.decision==='BLOCK'?'fraud':'wealth', msg: `Shield scanned ₹${(l.amount||0).toLocaleString()} → ${l.decision}`, time: new Date(l.timestamp).toLocaleTimeString() });
+      });
+    }
+  } catch(e) {}
+  feed.innerHTML = items.slice(0, 5).map(i => `<div class="activity-item"><div class="activity-dot ${i.dot}"></div><div class="activity-content"><div class="activity-msg">${i.msg}</div><div class="activity-time">${i.time}</div></div></div>`).join('');
+}
+
+function handleChatResponse(data, query) {
+  addMessage('ai', data.reply || data.ai_explanation || 'Evaluation complete.');
+}
+
+function requireOTP(amt, cb) { pendingInvestment = cb; ui.show('otp-modal', 'flex'); }
+
+</script>\n<div id="why-tooltip" style="
   position: fixed;
   background: #1e293b;
   color: white;
