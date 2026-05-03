@@ -23,6 +23,8 @@ allowed_origins = [
     "http://localhost:5000",
     "http://127.0.0.1:5000",
     "http://localhost:3000",
+    "http://localhost:8000",
+    "http://localhost:5500",
     "https://securewealth-ai.vercel.app",
 ]
 if FRONTEND_URL:
@@ -31,9 +33,9 @@ if FRONTEND_URL:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",  # Allow ALL vercel.app subdomains
+    allow_origin_regex=r"https://.*\.vercel\.app", 
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )

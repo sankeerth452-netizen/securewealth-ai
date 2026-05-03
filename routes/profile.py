@@ -53,7 +53,8 @@ async def analyze_profile(request: Request):
             if avg > 0:
                 score += max(0, 30 - ((sum(abs(t - avg) for t in txs) / len(txs)) / avg * 30))
         behavior_score = min(100, round(score + 30)) # Baseline + risk adjustment
-    except: pass
+    except: 
+        pass
 
     # 2. AI ANALYSIS WITH ROBUST FALLBACK
     if client:
@@ -69,7 +70,8 @@ async def analyze_profile(request: Request):
             result = {"behavior_score": behavior_score, "behavior_label": "Good" if behavior_score >= 70 else "Average"}
             for line in lines:
                 for key in ["ARCHETYPE", "STRENGTH", "WEAKNESS", "TIP", "SCORE_EXPLANATION"]:
-                    if f"{key}:" in line: result[key.lower()] = line.split(f"{key}:")[-1].strip()
+                    if f"{key}:" in line: 
+                        result[key.lower()] = line.split(f"{key}:")[-1].strip()
             return result
         except Exception as e:
             print(f"GROQ ERROR: {e}")
@@ -87,5 +89,3 @@ async def analyze_profile(request: Request):
         "savings_rate": round(savings_rate, 1),
         "note": "AI Service unavailable - using local analyzer"
     }
-
-        }

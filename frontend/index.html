@@ -519,7 +519,9 @@
  */
 
 // 1. CONSTANTS & STATE
-const API = "https://securewealth-backend.onrender.com";
+const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:8000"
+  : "https://securewealth-backend.onrender.com";
 let appState = "login"; // login | dashboard
 
 const USER_DEFAULTS = {
