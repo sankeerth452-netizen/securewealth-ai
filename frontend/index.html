@@ -105,6 +105,29 @@
         <div class="text-2xl font-bold tracking-tight text-apple-text">SecureWealth</div>
       </div>
 
+      <!-- Auth Selection -->
+      <div id="auth-selector" class="flex gap-1 bg-apple-bg p-1 border border-apple-border rounded-apple-sm mb-10">
+        <button onclick="toggleAuthMode('register')" id="mode-register" class="flex-1 py-2 rounded-[8px] text-xs font-bold bg-white shadow-sm text-apple-text transition-all">Register</button>
+        <button onclick="toggleAuthMode('login')" id="mode-login" class="flex-1 py-2 rounded-[8px] text-xs font-bold text-apple-muted hover:text-apple-text transition-all">Login</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-form" style="display:none;">
+        <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Welcome back.</h1>
+        <p class="text-apple-muted mb-8 text-lg">Securely access your wealth vault.</p>
+        <div class="space-y-5">
+          <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Email Address</label>
+            <input type="email" id="l-email" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="john@example.com">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Password</label>
+            <input type="password" id="l-password" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="••••••••">
+          </div>
+        </div>
+        <button onclick="doAppLogin()" class="w-full bg-apple-text text-white py-4 rounded-apple-sm font-bold mt-10 hover:opacity-90 active:scale-[0.98] transition-all">Sign In</button>
+      </div>
+
       <!-- Step 1 -->
       <div id="wizard-step-1">
         <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Who are you?</h1>
@@ -470,43 +493,86 @@
                 </div>
             </div>
             
-            <div class="col-span-5">
-                <div class="bank-card-gradient rounded-apple p-10 text-white shadow-2xl min-h-[260px] flex flex-col justify-between mb-8">
-                    <div class="flex justify-between items-start">
-                        <div class="text-xl font-bold italic tracking-tighter opacity-80">NOVA Platinum</div>
-                        <div class="w-12 h-8 bg-white/20 rounded-apple-sm backdrop-blur-md"></div>
+            </div>
+        </div>
+      </div>
+
+      <!-- SIMULATOR PAGE -->
+      <div id="page-simulator" class="page fade-in-up">
+        <header class="mb-16">
+          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Future Projections</h1>
+          <p class="text-xl text-apple-muted font-medium mt-2">Simulate wealth growth using historical market intelligence.</p>
+        </header>
+        <div class="grid grid-cols-12 gap-12">
+            <div class="col-span-8 bg-white rounded-apple border border-apple-border p-12">
+                <div id="sim-chart" class="h-[400px] flex items-center justify-center text-apple-muted italic">Simulation chart engine initializing...</div>
+                <div class="mt-12 grid grid-cols-3 gap-8 pt-8 border-t border-apple-border/50">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2">Projected Value</div>
+                        <div id="sim-result" class="text-4xl font-extrabold text-apple-text">₹12.4L</div>
                     </div>
                     <div>
-                        <div class="text-sm opacity-50 uppercase tracking-widest mb-1">Source Account</div>
-                        <div id="bc-number" class="text-2xl font-mono tracking-[0.3em] mb-8">···· ···· ···· 4821</div>
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <div class="text-[10px] opacity-40 uppercase tracking-widest mb-1">Account Holder</div>
-                                <div id="bc-name" class="text-lg font-bold">Priya Sharma</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-[10px] opacity-40 uppercase tracking-widest mb-1">Available Liquidity</div>
-                                <div id="bc-balance" class="text-2xl font-bold">₹1,20,000</div>
-                            </div>
-                        </div>
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2">Monthly SIP</div>
+                        <div id="sim-sip" class="text-4xl font-extrabold text-apple-text">₹5,000</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2">Duration</div>
+                        <div id="sim-duration" class="text-4xl font-extrabold text-apple-text">10Y</div>
                     </div>
                 </div>
-                
-                <div class="bg-white rounded-apple border border-apple-border p-8 shadow-sm">
-                    <h5 class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-6">Security Context</h5>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-sm font-medium text-apple-text">
-                            <span class="text-apple-teal">●</span> Identity Verified (Biometrics)
-                        </li>
-                        <li class="flex items-center gap-3 text-sm font-medium text-apple-text">
-                            <span class="text-apple-teal">●</span> Location Authorized (Home)
-                        </li>
-                        <li class="flex items-center gap-3 text-sm font-medium opacity-40 text-apple-text">
-                            <span>○</span> Behavioral Pattern Alignment
-                        </li>
-                    </ul>
+            </div>
+            <div class="col-span-4 space-y-6">
+                <div class="bg-apple-bg rounded-apple p-8 border border-apple-border">
+                    <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-4 block">Adjust Monthly SIP</label>
+                    <input type="range" min="1000" max="50000" step="1000" value="5000" class="w-full h-1.5 bg-apple-border rounded-full appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs font-bold text-apple-muted mt-4">
+                        <span>₹1k</span>
+                        <span>₹50k</span>
+                    </div>
                 </div>
             </div>
+        </div>
+      </div>
+
+      <!-- ALERTS PAGE (RISK SHIELD) -->
+      <div id="page-alerts" class="page fade-in-up">
+        <header class="mb-16">
+          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Risk Shield Audit</h1>
+          <p class="text-xl text-apple-muted font-medium mt-2">Real-time logs of every transaction evaluated by Cortex AI.</p>
+        </header>
+        <div class="bg-white rounded-apple border border-apple-border overflow-hidden">
+            <div id="audit-log-container" class="divide-y divide-apple-border">
+                <!-- Populated by JS -->
+                <div class="p-12 text-center text-apple-muted italic">Loading audit logs...</div>
+            </div>
+        </div>
+      </div>
+
+      <!-- PROFILE PAGE -->
+      <div id="page-profile" class="page fade-in-up">
+        <header class="mb-16">
+          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Your Identity</h1>
+          <p class="text-xl text-apple-muted font-medium mt-2">Manage your financial persona and security credentials.</p>
+        </header>
+        <div class="max-w-2xl bg-white rounded-apple border border-apple-border p-12">
+            <div class="flex items-center gap-6 mb-12">
+                <div class="w-24 h-24 bg-apple-text text-white rounded-full flex items-center justify-center text-3xl font-bold">P</div>
+                <div>
+                    <h2 class="text-3xl font-bold text-apple-text">Priya Sharma</h2>
+                    <p class="text-apple-muted">Wealth Architect Since 2024</p>
+                </div>
+            </div>
+            <div class="space-y-8">
+                <div class="flex justify-between items-center py-4 border-b border-apple-border/50">
+                    <span class="text-apple-muted font-medium">Risk Persona</span>
+                    <span class="font-bold text-apple-text uppercase tracking-widest text-sm">Aggressive Growth</span>
+                </div>
+                <div class="flex justify-between items-center py-4 border-b border-apple-border/50">
+                    <span class="text-apple-muted font-medium">Biometric Shield</span>
+                    <span class="text-apple-teal font-bold text-sm">ACTIVE</span>
+                </div>
+            </div>
+            <button onclick="logout()" class="mt-12 text-red-500 font-bold hover:underline">Sign Out</button>
         </div>
       </div>
 
@@ -610,6 +676,55 @@ async function safeFetch(endpoint, options = {}) {
 }
 
 // 5. LOGIN/REGISTER FLOW (NO OTP)
+function toggleAuthMode(mode) {
+  if (mode === 'login') {
+    ui.hide('wizard-step-1');
+    ui.hide('wizard-step-2');
+    ui.hide('wizard-step-3');
+    ui.hide('step-dot-1'); ui.hide('step-dot-2'); ui.hide('step-dot-3');
+    ui.show('login-form');
+    ui.class('mode-login', 'bg-white', 'add');
+    ui.class('mode-login', 'shadow-sm', 'add');
+    ui.class('mode-login', 'text-apple-text', 'add');
+    ui.class('mode-register', 'bg-white', 'remove');
+    ui.class('mode-register', 'shadow-sm', 'remove');
+    ui.class('mode-register', 'text-apple-text', 'remove');
+    ui.class('mode-register', 'text-apple-muted', 'add');
+  } else {
+    ui.show('wizard-step-1');
+    ui.show('step-dot-1'); ui.show('step-dot-2'); ui.show('step-dot-3');
+    ui.hide('login-form');
+    ui.class('mode-register', 'bg-white', 'add');
+    ui.class('mode-register', 'shadow-sm', 'add');
+    ui.class('mode-register', 'text-apple-text', 'add');
+    ui.class('mode-login', 'bg-white', 'remove');
+    ui.class('mode-login', 'shadow-sm', 'remove');
+    ui.class('mode-login', 'text-apple-text', 'remove');
+    ui.class('mode-login', 'text-apple-muted', 'add');
+    wizardStep = 1;
+    updateWizard();
+  }
+}
+
+async function doAppLogin() {
+  const email = ui.val('l-email');
+  const password = ui.val('l-password');
+  if (!email || !password) return alert("Email and Password required");
+
+  ui.show('wizard-loading');
+  const response = await safeFetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  });
+
+  if (response && response.success) {
+    onAuthSuccess(response.user);
+  } else {
+    alert("Login failed: " + (response?.error || "Invalid credentials"));
+    ui.hide('wizard-loading');
+  }
+}
+
 async function submitProfile() {
   const name = ui.val('f-name');
   const email = ui.val('f-email');
@@ -726,6 +841,11 @@ function switchPage(name, navEl) {
   if (name === 'dashboard') loadDashboard();
   if (name === 'networth') loadNetworth();
   if (name === 'alerts') loadRiskAlerts();
+}
+
+function logout() {
+  localStorage.removeItem('swt_user');
+  location.reload();
 }
 
 function nextWizardStep() { wizardStep++; updateWizard(); }
