@@ -70,85 +70,74 @@ class TransferRequest(BaseModel):
 @router.post("/register")
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
     """
-    Production-hardened registration endpoint.
-    - Validates presence of required fields.
-    - Handles database and connection failures gracefully.
-    - Logs detailed errors for debugging while returning safe messages.
+    Production-ready registration endpoint.
+    - Validates all input fields.
+    - Handles database availability issues.
+    - Logs body and errors for debugging.
+    - Returns safe, detailed error responses.
     """
-    print(f"[AUTH] Register attempt: {req.email}")
+    print(f"REGISTER BODY: {req.dict()}")
 
-    # 1. Basic Validation
+    # 1. Input Validation
     if not req.email or "@" not in req.email:
-        raise HTTPException(400, "Invalid email address")
-    if not req.name or len(req.name) < 2:
-        raise HTTPException(400, "Name must be at least 2 characters")
+        return {"error": "Missing or invalid email"}, 400
     if not req.password or len(req.password) < 6:
-        raise HTTPException(400, "Password must be at least 6 characters")
+        return {"error": "Password must be at least 6 characters"}, 400
+    if not req.name:
+        return {"error": "Name is required"}, 400
 
     if db is None:
-        print("[AUTH] ❌ DB session is None — DB connection might be failing")
-        raise HTTPException(503, "Service temporarily unavailable: Database connection failed")
+        print("DATABASE ERROR: Session is None")
+        raise HTTPException(status_code=503, detail="Database connection failed")
 
     try:
-        # 2. Check for existing user
-        try:
-            existing = db.query(User).filter(User.email == req.email).first()
-        except Exception as db_err:
-            print(f"[AUTH] ❌ DB Query Error: {db_err}")
-            raise HTTPException(500, "Internal database error during email check")
+        # 2. Check for duplicate email
+        existing_user = db.query(User).filter(User.email == req.email).first()
+        if existing_user:
+            return {"error": "Email already registered"}, 400
 
-        if existing:
-            print(f"[AUTH] ❌ Conflict: Email already exists: {req.email}")
-            raise HTTPException(400, "Email already registered")
+        # 3. Process Registration
+        user_id = str(uuid.uuid4())
+        new_user = User(
+            id=user_id,
+            name=req.name,
+            email=req.email,
+            password_hash=hash_password(req.password),
+        )
+        db.add(new_user)
+        
+        # Initialize account
+        new_account = Account(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            account_number=generate_account_number(),
+            balance=Decimal("100000.00"),
+        )
+        db.add(new_account)
+        db.commit()
 
-        # 3. Create User record
-        try:
-            user = User(
-                id=str(uuid.uuid4()),
-                name=req.name,
-                email=req.email,
-                password_hash=hash_password(req.password),
-            )
-            db.add(user)
-            db.flush()  # Assigns user.id
-            print(f"[AUTH] User created: {user.id}")
-
-            # 4. Create associated Account
-            account = Account(
-                id=str(uuid.uuid4()),
-                user_id=user.id,
-                account_number=generate_account_number(),
-                balance=Decimal("100000.00"),
-            )
-            db.add(account)
-            db.commit()
-            print(f"[AUTH] ✅ Transaction committed: {user.email}")
-        except Exception as commit_err:
-            db.rollback()
-            import traceback
-            print(f"[AUTH] ❌ Transaction Failed:\n{traceback.format_exc()}")
-            raise HTTPException(500, f"Failed to persist user data: {str(commit_err)}")
-
-        db.refresh(user)
-        db.refresh(account)
-
-        token = create_token(user.id, user.email)
+        # 4. Generate Session Token
+        token = create_token(user_id, req.email)
+        
         return {
-            "token":          token,
-            "user_id":        user.id,
-            "name":           user.name,
-            "email":          user.email,
-            "account_number": account.account_number,
-            "balance":        float(account.balance),
-            "message":        "Account created successfully",
+            "success": True,
+            "token": token,
+            "user": {
+                "id": user_id,
+                "name": req.name,
+                "email": req.email,
+                "account_number": new_account.account_number,
+                "balance": float(new_account.balance)
+            }
         }
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        print(f"[AUTH] ❌ UNEXPECTED REGISTER ERROR:\n{traceback.format_exc()}")
-        raise HTTPException(500, "An unexpected error occurred during registration")
+    except Exception as err:
+        if db: db.rollback()
+        print(f"REGISTER ERROR: {str(err)}")
+        raise HTTPException(
+            status_code=500, 
+            detail={"error": "Registration failed", "details": str(err)}
+        )
 
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
