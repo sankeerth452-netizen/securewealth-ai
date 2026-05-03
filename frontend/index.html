@@ -115,6 +115,14 @@
             <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Full Name</label>
             <input type="text" id="f-name" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="John Appleseed">
           </div>
+          <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Email Address</label>
+            <input type="email" id="f-email" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="john@example.com">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Password</label>
+            <input type="password" id="f-password" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="••••••••">
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Age</label>
@@ -600,7 +608,17 @@ async function safeFetch(endpoint, options = {}) {
 // 5. LOGIN/REGISTER FLOW (NO OTP)
 async function submitProfile() {
   const name = ui.val('f-name');
-  if (!name) return alert("Name required");
+  const email = ui.val('f-email');
+  const password = ui.val('f-password');
+
+  // Input Validation
+  if (!name || !email || !password) {
+    alert("All fields required: Name, Email, and Password");
+    return;
+  }
+
+  // Debug Log
+  console.log("REGISTER PAYLOAD:", { name, email, password });
 
   ui.hide('wizard-step-3');
   ui.show('wizard-loading');
@@ -609,15 +627,15 @@ async function submitProfile() {
     method: 'POST',
     body: JSON.stringify({
       name,
-      email: `${name.toLowerCase().replace(/\s/g, '.')}@example.com`,
-      password: "demoPassword123"
+      email,
+      password
     })
   });
 
   if (response && response.success) {
     onAuthSuccess(response.user);
   } else {
-    alert("Registration failed. Please try again.");
+    alert("Registration failed: " + (response?.error || "Please try again."));
     ui.show('wizard-step-3');
     ui.hide('wizard-loading');
   }
