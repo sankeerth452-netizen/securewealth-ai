@@ -23,13 +23,23 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = 24
 
 
-# ── HELPERS ───────────────────────────────────────────────────────────────────
+import hashlib
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    """
+    Safely hashes password by pre-hashing with SHA-256 
+    to bypass bcrypt's 72-byte limitation.
+    """
+    hashed_input = hashlib.sha256(password.encode()).hexdigest()
+    return pwd_context.hash(hashed_input)
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    """
+    Verifies a plain password against a hash by pre-hashing 
+    the plain password first.
+    """
+    hashed_input = hashlib.sha256(plain.encode()).hexdigest()
+    return pwd_context.verify(hashed_input, hashed)
 
 def create_token(user_id: str, email: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=JWT_EXPIRE_HOURS)
@@ -67,36 +77,36 @@ class TransferRequest(BaseModel):
 
 # ── REGISTER ──────────────────────────────────────────────────────────────────
 
+from fastapi.responses import JSONResponse
+
 @router.post("/register")
-def register(req: RegisterRequest, db: Session = Depends(get_db)):
+async def register(req: RegisterRequest, db: Session = Depends(get_db)):
     """
     Production-ready registration endpoint.
-    - Validates all input fields.
-    - Handles database availability issues.
-    - Logs body and errors for debugging.
-    - Returns safe, detailed error responses.
+    - Resolves bcrypt 72-byte limit with pre-hashing.
+    - Hardened input validation and error responses.
     """
-    print(f"REGISTER BODY: {req.dict()}")
-
-    # 1. Input Validation
-    if not req.email or "@" not in req.email:
-        return {"error": "Missing or invalid email"}, 400
-    if not req.password or len(req.password) < 6:
-        return {"error": "Password must be at least 6 characters"}, 400
-    if not req.name:
-        return {"error": "Name is required"}, 400
-
-    if db is None:
-        print("DATABASE ERROR: Session is None")
-        raise HTTPException(status_code=503, detail="Database connection failed")
-
     try:
-        # 2. Check for duplicate email
+        # Log body (Safe for debugging, but be cautious with passwords in real logs)
+        print("REGISTER BODY:", req.dict(exclude={"password"}))
+
+        # 1. Validation
+        if not req.email or "@" not in req.email:
+            return JSONResponse(status_code=400, content={"error": "Invalid email address"})
+        if not req.password or len(req.password) < 6:
+            return JSONResponse(status_code=400, content={"error": "Password must be at least 6 characters"})
+        if not req.name:
+            return JSONResponse(status_code=400, content={"error": "Name is required"})
+
+        if db is None:
+            raise Exception("Database connection failed")
+
+        # 2. Duplicate Check
         existing_user = db.query(User).filter(User.email == req.email).first()
         if existing_user:
-            return {"error": "Email already registered"}, 400
+            return JSONResponse(status_code=400, content={"error": "Email already registered"})
 
-        # 3. Process Registration
+        # 3. Create User & Account
         user_id = str(uuid.uuid4())
         new_user = User(
             id=user_id,
@@ -106,7 +116,6 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         )
         db.add(new_user)
         
-        # Initialize account
         new_account = Account(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -116,9 +125,8 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         db.add(new_account)
         db.commit()
 
-        # 4. Generate Session Token
+        # 4. Success Response
         token = create_token(user_id, req.email)
-        
         return {
             "success": True,
             "token": token,
@@ -131,12 +139,12 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
             }
         }
 
-    except Exception as err:
+    except Exception as e:
         if db: db.rollback()
-        print(f"REGISTER ERROR: {str(err)}")
-        raise HTTPException(
-            status_code=500, 
-            detail={"error": "Registration failed", "details": str(err)}
+        print("REGISTER ERROR:", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Registration failed", "details": str(e)}
         )
 
 
