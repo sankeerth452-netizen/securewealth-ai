@@ -26,6 +26,7 @@ allowed_origins = [
     "http://localhost:8000",
     "http://localhost:5500",
     "https://securewealth-ai.vercel.app",
+    "null", # Support for file:// protocol local access
 ]
 if FRONTEND_URL:
     allowed_origins.append(FRONTEND_URL)
