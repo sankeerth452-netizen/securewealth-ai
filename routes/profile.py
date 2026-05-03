@@ -9,19 +9,36 @@ from pydantic import BaseModel
 from routes.user_history import USER_HISTORY
 from routes.risk import audit_log
 
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 router = APIRouter()
 
-class ProfileRequest(BaseModel):
-    age: int
-    income: float
-    monthly_expenses: float
-    current_savings: float
-    risk_appetite: str
-    goal: str
-    investment_experience: str  # "none", "beginner", "intermediate"
+class AnalyzeRequest(BaseModel):
+    age: int | None = 28
+    income: float | None = 0
+    monthly_expenses: float | None = 0
+    current_savings: float | None = 0
+    risk_appetite: str | None = "medium"
+    goal: str | None = "general savings"
+    investment_experience: str | None = "beginner"
 
-@router.post("/profile/analyze")
-def analyze_profile(req: ProfileRequest):
+@router.post("/analyze")
+async def analyze_profile(request: Request):
+    try:
+        # Debug Log
+        body = await request.json()
+        print("ANALYZE BODY:", body)
+        
+        # Pydantic Validation
+        req = AnalyzeRequest(**body)
+    except Exception as e:
+        print(f"[Profile] Validation Error: {e}")
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Invalid request body: {str(e)}"}
+        )
     savings_rate = 0.0
     try:
         if req.income > 0:
