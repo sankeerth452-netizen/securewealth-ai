@@ -25,6 +25,7 @@ class AnalyzeRequest(BaseModel):
     investment_experience: str | None = "beginner"
 
 @router.post("/analyze")
+@router.post("/profile/analyze")
 async def analyze_profile(request: Request):
     try:
         # Debug Log

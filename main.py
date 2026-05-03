@@ -52,6 +52,11 @@ app.include_router(auth.router,         prefix="/api/auth",tags=["Auth"])
 app.include_router(transactions.router, prefix="/api",     tags=["Transactions"])
 app.include_router(goals.router,        prefix="/api",     tags=["Goals"])
 
+@app.get("/api/routes")
+def list_routes():
+    """Debug endpoint to list all available API paths."""
+    return [{"path": route.path, "name": route.name} for route in app.routes]
+
 @app.get("/")
 def root():
     return {"status": "SecureWealth Twin v3.6 running ✅"}

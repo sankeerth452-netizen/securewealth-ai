@@ -662,7 +662,7 @@ async function loadDashboard() {
   if (appState !== "dashboard") return;
   
   try {
-    const res = await safeFetch('/api/ai/profile/analyze', { 
+    const res = await safeFetch('/api/analyze', { 
       method: "POST", 
       body: JSON.stringify(USER) 
     });
