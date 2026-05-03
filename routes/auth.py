@@ -165,13 +165,16 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
     token = create_token(user.id, user.email)
     return {
-        "token":          token,
-        "user_id":        user.id,
-        "name":           user.name,
-        "email":          user.email,
-        "account_number": account.account_number if account else "",
-        "balance":        float(account.balance) if account else 0,
-        "message":        "Login successful",
+        "success": True,
+        "token": token,
+        "user": {
+            "id":             user.id,
+            "name":           user.name,
+            "email":          user.email,
+            "account_number": account.account_number if account else "",
+            "balance":        float(account.balance) if account else 0,
+        },
+        "message": "Login successful",
     }
 
 

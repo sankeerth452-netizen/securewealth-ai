@@ -1,103 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecureWealth Twin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['Inter', 'sans-serif'],
-        },
-        colors: {
-          apple: {
-            bg: '#fbfbfb',
-            card: '#ffffff',
-            text: '#1d1d1f',
-            muted: '#86868b',
-            blue: '#0071e3',
-            teal: '#00d4aa',
-            border: '#d2d2d7',
-          }
-        },
-        borderRadius: {
-          'apple': '20px',
-          'apple-sm': '12px',
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureWealth Twin — AI Financial Vault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'apple-bg': '#fbfbfb',
+            'apple-text': '#1d1d1f',
+            'apple-muted': '#86868b',
+            'apple-border': '#d2d2d7',
+            'apple-blue': '#0071e3',
+            'apple-teal': '#00d4aa',
+          },
+          borderRadius: { 'apple': '20px', 'apple-sm': '12px' }
         }
       }
     }
-  }
-</script>
-<style>
-  body { 
-    background-color: #fbfbfb; 
-    -webkit-font-smoothing: antialiased;
-    color: #1d1d1f;
-  }
-  .glass {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-  }
-  .page { display: none; transition: opacity 0.4s ease, transform 0.4s ease; opacity: 0; transform: translateY(10px); }
-  .page.active { display: block; opacity: 1; transform: translateY(0); }
-  
-  .risk-btn.active {
-    background-color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    color: #1d1d1f !important;
-  }
-  
-  .fade-in-up {
-    animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 10px; }
-  
-  /* Range Slider Apple Style */
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    background: #d2d2d7;
-    border-radius: 5px;
-    outline: none;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #1d1d1f;
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
-  }
-  input[type=range]::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-  }
-
-  .bank-card-gradient {
-    background: linear-gradient(135deg, #1d1d1f 0%, #434343 100%);
-  }
-</style>
+  </script>
+  <style>
+    body { background-color: #fbfbfb; -webkit-font-smoothing: antialiased; color: #1d1d1f; }
+    .glass { background: rgba(255, 255, 255, 0.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+    .page { display: none; opacity: 0; transform: translateY(10px); transition: all 0.4s ease; }
+    .page.active { display: block; opacity: 1; transform: translateY(0); }
+    .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .nav-item.active { background: rgba(0,0,0,0.05); color: #1d1d1f; }
+  </style>
 </head>
 <body class="font-sans antialiased bg-apple-bg text-apple-text">
 
+  <!-- LOGIN/REGISTER SCREEN -->
   <div id="login-screen" class="bg-apple-bg fixed inset-0 z-[100] flex items-center justify-center p-6">
     <div class="login-box glass border border-apple-border shadow-2xl p-12 rounded-apple max-w-md w-full fade-in-up">
       <div class="flex items-center gap-3 mb-10">
@@ -105,808 +43,326 @@
         <div class="text-2xl font-bold tracking-tight text-apple-text">SecureWealth</div>
       </div>
 
-      <!-- Auth Selection -->
       <div id="auth-selector" class="flex gap-1 bg-apple-bg p-1 border border-apple-border rounded-apple-sm mb-10">
         <button onclick="toggleAuthMode('register')" id="mode-register" class="flex-1 py-2 rounded-[8px] text-xs font-bold bg-white shadow-sm text-apple-text transition-all">Register</button>
         <button onclick="toggleAuthMode('login')" id="mode-login" class="flex-1 py-2 rounded-[8px] text-xs font-bold text-apple-muted hover:text-apple-text transition-all">Login</button>
       </div>
 
-      <!-- Login Form -->
+      <!-- LOGIN FORM -->
       <div id="login-form" style="display:none;">
         <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Welcome back.</h1>
         <p class="text-apple-muted mb-8 text-lg">Securely access your wealth vault.</p>
         <div class="space-y-5">
-          <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Email Address</label>
-            <input type="email" id="l-email" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="john@example.com">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Password</label>
-            <input type="password" id="l-password" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="••••••••">
-          </div>
+          <input type="email" id="l-email" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all" placeholder="Email Address">
+          <input type="password" id="l-password" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all" placeholder="Password">
         </div>
         <button onclick="doAppLogin()" class="w-full bg-apple-text text-white py-4 rounded-apple-sm font-bold mt-10 hover:opacity-90 active:scale-[0.98] transition-all">Sign In</button>
       </div>
 
-      <!-- Step 1 -->
+      <!-- ONBOARDING WIZARD (REGISTER) -->
       <div id="wizard-step-1">
         <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Who are you?</h1>
         <p class="text-apple-muted mb-8 text-lg">Personalize your AI wealth experience.</p>
-        
         <div class="space-y-5">
-          <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Full Name</label>
-            <input type="text" id="f-name" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="John Appleseed">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Email Address</label>
-            <input type="email" id="f-email" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="john@example.com">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Password</label>
-            <input type="password" id="f-password" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="••••••••">
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Age</label>
-              <input type="number" id="f-age" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="25">
-            </div>
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Experience</label>
-              <select id="f-exp" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text appearance-none">
-                <option value="none">None</option>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="expert">Expert</option>
-              </select>
-            </div>
-          </div>
+          <input type="text" id="f-name" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none" placeholder="Full Name">
+          <input type="email" id="f-email" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none" placeholder="Email Address">
+          <input type="password" id="f-password" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none" placeholder="Password">
         </div>
         <button onclick="nextWizardStep()" class="w-full bg-apple-text text-white py-4 rounded-apple-sm font-bold mt-10 hover:opacity-90 active:scale-[0.98] transition-all">Continue</button>
-        <div class="text-center mt-6">
-          <button onclick="fillDemo()" class="text-apple-muted text-xs hover:text-apple-text transition-colors uppercase tracking-widest font-bold">Demo Setup</button>
-        </div>
       </div>
 
-      <!-- Step 2 -->
       <div id="wizard-step-2" style="display:none;">
-        <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text text-center">Your finances</h1>
-        <p class="text-apple-muted mb-10 text-center">We use this to secure your wealth in real-time.</p>
-        <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Monthly Income</label>
-              <input type="number" id="f-income" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text">
-            </div>
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Expenses</label>
-              <input type="number" id="f-expenses" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text">
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Current Savings</label>
-              <input type="number" id="f-savings" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text">
-            </div>
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Investments</label>
-              <input type="number" id="f-investments" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text">
-            </div>
-          </div>
+        <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Your finances</h1>
+        <div class="grid grid-cols-2 gap-4 mt-8">
+          <input type="number" id="f-income" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3" placeholder="Income">
+          <input type="number" id="f-expenses" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3" placeholder="Expenses">
+          <input type="number" id="f-savings" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3" placeholder="Savings">
+          <input type="number" id="f-investments" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3" placeholder="Investments">
         </div>
         <div class="flex gap-4 mt-12">
-          <button onclick="prevWizardStep()" class="flex-1 border border-apple-border py-4 rounded-apple-sm font-bold hover:bg-black/[0.03] transition-all text-apple-text">Back</button>
-          <button onclick="nextWizardStep()" class="flex-1 bg-apple-text text-white py-4 rounded-apple-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all">Continue</button>
+          <button onclick="prevWizardStep()" class="flex-1 border border-apple-border py-4 rounded-apple-sm">Back</button>
+          <button onclick="nextWizardStep()" class="flex-1 bg-apple-text text-white py-4 rounded-apple-sm">Continue</button>
         </div>
       </div>
 
-      <!-- Step 3 -->
       <div id="wizard-step-3" style="display:none;">
-        <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Your goals</h1>
-        <p class="text-apple-muted mb-10">Define what you're building wealth for.</p>
-        <div class="space-y-6">
-          <div>
-            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Primary Goal</label>
-            <input type="text" id="f-goal" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="Retire at 45">
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Timeline (Years)</label>
-              <input type="number" id="f-timeline" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text">
-            </div>
-            <div>
-              <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2 block">Risk Appetite</label>
-              <div class="flex gap-1 bg-apple-bg p-1 border border-apple-border rounded-apple-sm">
-                <button id="risk-low" onclick="selectRisk('low')" class="risk-btn flex-1 py-2 rounded-[8px] text-xs font-bold transition-all hover:bg-white hover:shadow-sm text-apple-text">Low</button>
-                <button id="risk-medium" onclick="selectRisk('medium')" class="risk-btn flex-1 py-2 rounded-[8px] text-xs font-bold bg-white shadow-sm text-apple-text active">Med</button>
-                <button id="risk-high" onclick="selectRisk('high')" class="risk-btn flex-1 py-2 rounded-[8px] text-xs font-bold transition-all hover:bg-white hover:shadow-sm text-apple-text">High</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="flex gap-4 mt-12">
-          <button onclick="prevWizardStep()" class="flex-1 border border-apple-border py-4 rounded-apple-sm font-bold hover:bg-black/[0.03] transition-all text-apple-text">Back</button>
-          <button onclick="submitProfile()" class="flex-1 bg-apple-text text-white py-4 rounded-apple-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all">Finish</button>
-        </div>
+        <h1 class="text-4xl font-extrabold mb-2 tracking-tight text-apple-text">Final Goal</h1>
+        <input type="text" id="f-goal" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-4 py-3 mt-8" placeholder="Primary Goal (e.g. Retire at 50)">
+        <button onclick="submitProfile()" class="w-full bg-apple-text text-white py-4 rounded-apple-sm font-bold mt-10">Finish & Secure</button>
       </div>
-
-      <!-- Progress Dots -->
-      <div class="flex justify-center gap-2 mt-12">
-        <div id="step-dot-1" class="w-1.5 h-1.5 rounded-full bg-apple-border transition-all duration-300 [&.active]:w-4 [&.active]:bg-apple-text active"></div>
-        <div id="step-dot-2" class="w-1.5 h-1.5 rounded-full bg-apple-border transition-all duration-300 [&.active]:w-4 [&.active]:bg-apple-text"></div>
-        <div id="step-dot-3" class="w-1.5 h-1.5 rounded-full bg-apple-border transition-all duration-300 [&.active]:w-4 [&.active]:bg-apple-text"></div>
-      </div>
-    </div>
-
-    <!-- Fullscreen Loading -->
-    <div id="wizard-loading" style="display:none;" class="fixed inset-0 z-[110] bg-white flex flex-col items-center justify-center p-6 text-center">
-      <div class="relative w-24 h-24 mb-10">
-        <div class="absolute inset-0 border-[6px] border-apple-bg rounded-full"></div>
-        <div class="absolute inset-0 border-[6px] border-t-apple-text rounded-full animate-spin"></div>
-      </div>
-      <h2 class="text-4xl font-extrabold mb-4 tracking-tight text-apple-text">Creating your vault</h2>
-      <p class="text-xl text-apple-muted max-w-sm leading-relaxed">Securing your financial data with industrial-grade encryption.</p>
     </div>
   </div>
 
+  <!-- LOADING OVERLAY -->
+  <div id="global-loading" style="display:none;" class="fixed inset-0 z-[110] bg-white/90 backdrop-blur-sm flex items-center justify-center">
+    <div class="w-12 h-12 border-4 border-apple-bg border-t-apple-text rounded-full animate-spin"></div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
   <div id="app" class="hidden min-h-screen bg-apple-bg">
-    <!-- Navbar Sidebar -->
     <aside class="w-[260px] glass border-r border-apple-border fixed inset-y-0 left-0 z-50 flex flex-col p-8">
       <div class="flex items-center gap-3 mb-16">
         <div class="w-9 h-9 bg-apple-text rounded-apple-sm flex items-center justify-center text-white text-xl shadow-lg">🛡</div>
         <div class="text-xl font-bold tracking-tight text-apple-text">SecureWealth</div>
       </div>
-
       <nav class="flex-1 space-y-2">
-        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-6 px-3 opacity-60">Portfolio</div>
-        <button onclick="switchPage('dashboard', this)" class="nav-item active flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-[15px] font-semibold transition-all hover:bg-black/5 [&.active]:bg-black/5 [&.active]:text-apple-text text-apple-muted">
-          <span class="text-lg opacity-60">▣</span> Dashboard
-        </button>
-        <button onclick="switchPage('chat', this)" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-[15px] font-semibold transition-all hover:bg-black/5 text-apple-muted">
-          <span class="text-lg opacity-60">💬</span> AI Coach
-        </button>
-        <button onclick="switchPage('transfer', this)" id="nav-transfer" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-[15px] font-semibold transition-all hover:bg-black/5 text-apple-muted">
-          <span class="text-lg opacity-60">↑</span> Transfer
-        </button>
-        <button onclick="switchPage('simulator', this)" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-[15px] font-semibold transition-all hover:bg-black/5 text-apple-muted">
-          <span class="text-lg opacity-60">📊</span> Simulator
-        </button>
-
-        <div class="pt-8 mb-6">
-          <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-6 px-3 opacity-60">Protection</div>
-          <button onclick="switchPage('alerts', this)" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-[15px] font-semibold transition-all hover:bg-black/5 text-apple-muted">
-            <span class="text-lg opacity-60">🛡</span> Risk Shield
-          </button>
-        </div>
+        <button onclick="switchPage('dashboard', this)" class="nav-item active flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-sm font-semibold text-apple-muted transition-all">Dashboard</button>
+        <button onclick="switchPage('chat', this)" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-sm font-semibold text-apple-muted transition-all">AI Coach</button>
+        <button onclick="switchPage('simulator', this)" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-sm font-semibold text-apple-muted transition-all">Simulator</button>
+        <button onclick="switchPage('alerts', this)" id="nav-alerts" class="nav-item flex items-center gap-4 w-full px-4 py-3 rounded-apple-sm text-sm font-semibold text-apple-muted transition-all">Risk Shield</button>
       </nav>
-
-      <div class="mt-auto pt-8 border-t border-apple-border">
-        <div class="flex items-center gap-4 px-3 cursor-pointer group" onclick="switchPage('profile', this)">
-          <div id="sidebar-avatar" class="w-10 h-10 bg-apple-text text-white rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-transform group-hover:scale-105">P</div>
-          <div class="min-width-0">
-            <div id="sidebar-name" class="text-sm font-bold truncate text-apple-text">Priya Sharma</div>
-            <div id="sidebar-role" class="text-[11px] text-apple-muted font-medium truncate uppercase tracking-tighter">Wealth Architect</div>
-          </div>
+      <div class="mt-auto pt-8 border-t border-apple-border cursor-pointer" onclick="switchPage('profile', this)">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 bg-apple-text text-white rounded-full flex items-center justify-center text-sm font-bold">P</div>
+          <div class="text-sm font-bold text-apple-text" id="sidebar-name-display">User</div>
         </div>
       </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="ml-[260px] flex-1 p-16 max-w-[1400px] mx-auto">
       
-      <!-- DASHBOARD PAGE -->
+      <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
-        <header class="mb-20 fade-in-up">
-          <div class="flex justify-between items-end mb-4">
-            <h1 id="dash-greeting" class="text-7xl font-extrabold tracking-tight text-apple-text">Good morning.</h1>
-            <div class="text-right">
-                <div class="text-[11px] font-bold uppercase tracking-widest text-apple-muted mb-1">Status</div>
-                <div class="flex items-center gap-2 text-apple-teal font-bold">
-                    <span class="w-2 h-2 rounded-full bg-apple-teal animate-pulse"></span>
-                    Protected by AI
-                </div>
+        <header class="mb-16">
+          <h1 class="text-6xl font-extrabold tracking-tight text-apple-text" id="dash-greeting">Good morning.</h1>
+          <p class="text-xl text-apple-muted mt-4" id="dash-behavior-explanation">Your financial ecosystem is performing optimally.</p>
+        </header>
+        <div class="grid grid-cols-12 gap-8">
+          <div class="col-span-8 bg-white border border-apple-border p-12 rounded-apple shadow-sm">
+            <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-4">Total Net Worth</div>
+            <div id="nw-total-assets" class="text-7xl font-extrabold tracking-tighter">₹0</div>
+            <div class="grid grid-cols-2 gap-8 mt-12 pt-8 border-t border-apple-border">
+              <div><div class="text-xs text-apple-muted mb-1">Savings</div><div id="dash-savings" class="text-2xl font-bold">₹0</div></div>
+              <div><div class="text-xs text-apple-muted mb-1">Archetype</div><div id="dash-archetype" class="text-2xl font-bold text-apple-teal">-</div></div>
             </div>
           </div>
-          <p class="text-2xl text-apple-muted font-medium max-w-2xl leading-relaxed">Your financial ecosystem is performing optimally and secured by Cortex Shield.</p>
-        </header>
-
-        <!-- Dynamic Bento Grid -->
-        <div class="grid grid-cols-12 gap-8 mb-20">
-          <div class="col-span-8 bg-white rounded-apple border border-apple-border p-12 shadow-sm hover:shadow-xl transition-all duration-500 group fade-in-up" style="animation-delay: 0.1s;">
-            <div class="flex justify-between items-start mb-12">
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-6 opacity-60">Current Net Worth</div>
-                <div id="dash-networth" class="text-8xl font-extrabold tracking-tighter text-apple-text mb-4">₹3,42,000</div>
-              </div>
-              <div class="bg-apple-bg rounded-apple-sm px-4 py-2 text-apple-teal font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">↑ +₹12.4k</div>
-            </div>
-            
-            <div class="grid grid-cols-3 gap-8 pt-10 border-t border-apple-border/50">
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-3">Savings</div>
-                <div id="dash-savings" class="text-2xl font-bold text-apple-text">₹1,20,000</div>
-              </div>
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-3">Monthly Income</div>
-                <div id="dash-income" class="text-2xl font-bold text-apple-text">₹85,000</div>
-              </div>
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-3">Savings Rate</div>
-                <div id="dash-savings-rate" class="text-2xl font-bold text-apple-teal">32%</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-span-4 flex flex-col gap-8">
-            <div class="bg-apple-text text-white rounded-apple p-10 shadow-2xl relative overflow-hidden group fade-in-up" style="animation-delay: 0.2s;">
-              <div class="relative z-10">
-                <div class="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-6">AI Profile</div>
-                <div id="dash-archetype" class="text-4xl font-extrabold mb-4 tracking-tight">Bold Grower</div>
-                <p id="dash-desc" class="text-sm opacity-70 leading-relaxed font-medium">Prioritizing expansion while maintaining high-liquidity reserves.</p>
-                <div id="dash-tags" class="flex flex-wrap gap-2 mt-8"></div>
-              </div>
-              <!-- Abstract decoration -->
-              <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
-            </div>
-
-            <div class="bg-white rounded-apple border border-apple-border p-10 shadow-sm hover:shadow-md transition-all fade-in-up" style="animation-delay: 0.3s;">
-                <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-6">Security Score</div>
-                <div class="flex items-end justify-between">
-                    <div id="dash-behavior-score" class="text-6xl font-extrabold tracking-tighter text-apple-text">84</div>
-                    <div class="text-[10px] font-bold text-apple-muted mb-2">Excellent</div>
-                </div>
-                <div class="w-full bg-apple-bg h-1.5 rounded-full mt-6 overflow-hidden">
-                    <div class="bg-apple-teal h-full w-[84%] rounded-full shadow-[0_0_8px_rgba(0,212,170,0.4)]"></div>
-                </div>
-            </div>
+          <div class="col-span-4 bg-apple-text text-white p-10 rounded-apple shadow-xl flex flex-col justify-between">
+            <div class="text-xs opacity-50 uppercase font-bold tracking-widest">Security Score</div>
+            <div id="dash-behavior-score" class="text-8xl font-extrabold">0</div>
           </div>
         </div>
+      </div>
 
-        <div class="grid grid-cols-12 gap-10">
-          <div class="col-span-8 space-y-10">
-            <!-- Asset Allocation Section -->
-            <section class="fade-in-up" style="animation-delay: 0.4s;">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-3xl font-extrabold tracking-tight text-apple-text">Asset Allocation</h3>
-                    <button class="text-apple-blue font-bold text-sm hover:underline">Rebalance Portfolio</button>
-                </div>
-                <div id="dash-portfolio" class="bg-white rounded-apple border border-apple-border overflow-hidden shadow-sm">
-                    <!-- Populated by JS -->
-                </div>
-            </section>
-
-            <!-- Intelligence Feed -->
-            <section class="fade-in-up" style="animation-delay: 0.5s;">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-3xl font-extrabold tracking-tight text-apple-text">Intelligence Feed</h3>
-                    <div class="text-xs font-bold text-apple-muted px-3 py-1 bg-apple-bg rounded-full">Real-time Analysis</div>
-                </div>
-                <div id="activity-feed" class="space-y-4">
-                    <!-- Populated by JS -->
-                </div>
-            </section>
-          </div>
-
-          <aside class="col-span-4 space-y-10 fade-in-up" style="animation-delay: 0.6s;">
-            <!-- Quick Actions -->
-            <div class="bg-white rounded-apple border border-apple-border p-10 shadow-sm">
-                <h4 class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-8">Quick Actions</h4>
-                <div class="space-y-4">
-                    <button onclick="switchPage('transfer', document.getElementById('nav-transfer'))" class="w-full flex items-center justify-between p-4 rounded-apple-sm hover:bg-apple-bg transition-all group">
-                        <div class="flex items-center gap-4">
-                            <span class="w-10 h-10 rounded-full bg-apple-bg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">↑</span>
-                            <span class="font-bold text-sm text-apple-text">Move Capital</span>
-                        </div>
-                        <span class="text-apple-muted opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                    </button>
-                    <button onclick="switchPage('chat', this)" class="w-full flex items-center justify-between p-4 rounded-apple-sm hover:bg-apple-bg transition-all group">
-                        <div class="flex items-center gap-4">
-                            <span class="w-10 h-10 rounded-full bg-apple-bg flex items-center justify-center text-lg group-hover:scale-110 transition-transform">💬</span>
-                            <span class="font-bold text-sm text-apple-text">Ask AI Coach</span>
-                        </div>
-                        <span class="text-apple-muted opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                    </button>
-                    <button onclick="simulateFraud()" class="w-full flex items-center justify-between p-4 rounded-apple-sm hover:bg-red-50 transition-all group">
-                        <div class="flex items-center gap-4 text-red-500">
-                            <span class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">🛡️</span>
-                            <span class="font-bold text-sm">Simulate Attack</span>
-                        </div>
-                        <span class="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Risk Shield Monitor -->
-            <div class="bg-white rounded-apple border border-apple-border p-10 shadow-sm text-center">
-                <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-8">Risk Shield</div>
-                <div id="dash-risk-level" class="text-6xl font-extrabold text-apple-teal tracking-tighter mb-4">LOW</div>
-                <div id="dash-risk-delta" class="text-xs font-bold text-apple-muted bg-apple-bg px-4 py-2 rounded-full inline-block">72h No Threats</div>
-                
-                <div id="dash-pyramid" class="grid grid-cols-2 gap-3 mt-10">
-                    <div class="pyramid-item active p-4 bg-apple-bg rounded-apple-sm border border-apple-border/50 text-center">
-                        <div class="pyr-dot w-2 h-2 rounded-full bg-apple-teal mx-auto mb-3 shadow-[0_0_8px_rgba(0,212,170,0.5)]"></div>
-                        <div class="pyr-label text-[10px] font-bold uppercase tracking-widest opacity-60 text-apple-text">Identity</div>
-                    </div>
-                    <div class="pyramid-item active p-4 bg-apple-bg rounded-apple-sm border border-apple-border/50 text-center">
-                        <div class="pyr-dot w-2 h-2 rounded-full bg-apple-teal mx-auto mb-3 shadow-[0_0_8px_rgba(0,212,170,0.5)]"></div>
-                        <div class="pyr-label text-[10px] font-bold uppercase tracking-widest opacity-60 text-apple-text">Context</div>
-                    </div>
-                    <div class="pyramid-item active p-4 bg-apple-bg rounded-apple-sm border border-apple-border/50 text-center">
-                        <div class="pyr-dot w-2 h-2 rounded-full bg-apple-teal mx-auto mb-3 shadow-[0_0_8px_rgba(0,212,170,0.5)]"></div>
-                        <div class="pyr-label text-[10px] font-bold uppercase tracking-widest opacity-60 text-apple-text">Behavior</div>
-                    </div>
-                    <div class="pyramid-item active p-4 bg-apple-bg rounded-apple-sm border border-apple-border/50 text-center">
-                        <div class="pyr-dot w-2 h-2 rounded-full bg-apple-teal mx-auto mb-3 shadow-[0_0_8px_rgba(0,212,170,0.5)]"></div>
-                        <div class="pyr-label text-[10px] font-bold uppercase tracking-widest opacity-60 text-apple-text">Intent</div>
-                    </div>
-                </div>
-            </div>
-          </aside>
+      <!-- CHAT -->
+      <div id="page-chat" class="page h-[calc(100vh-12rem)] flex flex-col">
+        <div id="chat-messages" class="flex-1 overflow-y-auto space-y-6 pr-6 custom-scrollbar"></div>
+        <div class="mt-8 relative max-w-4xl mx-auto w-full">
+          <input type="text" id="chat-input" class="w-full bg-white border border-apple-border rounded-full px-8 py-5 text-lg focus:outline-none shadow-lg" placeholder="Ask AI Coach...">
+          <button onclick="sendChat()" class="absolute right-3 top-3 bg-apple-text text-white w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-xl">↑</button>
         </div>
       </div>
 
-      <!-- CHAT PAGE -->
-      <div id="page-chat" class="page h-[calc(100vh-8rem)] flex flex-col fade-in-up">
-        <header class="mb-12">
-          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Wealth Coach</h1>
-          <p class="text-xl text-apple-muted font-medium mt-2">Personalized intelligence for your financial future.</p>
-        </header>
-        <div id="chat-messages" class="flex-1 overflow-y-auto space-y-8 pr-6 custom-scrollbar">
-          <!-- Messages dynamically populated -->
-        </div>
-        <div class="mt-12 relative max-w-4xl mx-auto w-full group">
-          <input type="text" id="chat-input" class="w-full bg-white border border-apple-border rounded-full px-10 py-6 text-lg focus:outline-none focus:ring-2 focus:ring-apple-text/5 shadow-lg transition-all text-apple-text" placeholder="Ask about your net worth or simulate a SIP...">
-          <button id="send-btn" onclick="sendChat()" class="absolute right-4 top-4 w-12 h-12 bg-apple-text text-white rounded-full flex items-center justify-center text-xl hover:scale-105 active:scale-95 transition-all shadow-xl">↑</button>
+      <!-- SIMULATOR -->
+      <div id="page-simulator" class="page">
+        <h1 class="text-5xl font-extrabold mb-8">Simulator</h1>
+        <div class="bg-white border border-apple-border p-12 rounded-apple text-center shadow-sm">
+            <div id="sim-amount" class="text-8xl font-extrabold mb-4">₹0</div>
+            <p class="text-xl text-apple-muted font-medium">Projected Wealth over 10 Years</p>
         </div>
       </div>
 
-      <!-- TRANSFER PAGE -->
-      <div id="page-transfer" class="page fade-in-up">
-        <header class="mb-16">
-          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Deploy Capital</h1>
-          <p class="text-xl text-apple-muted font-medium mt-2">Move funds securely through Cortex Shield.</p>
-        </header>
-        
-        <div class="grid grid-cols-12 gap-12">
-            <div class="col-span-7">
-                <div class="bg-white rounded-apple border border-apple-border p-12 shadow-sm">
-                    <div class="space-y-8">
-                      <div>
-                        <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-3 block">Recipient Account Name</label>
-                        <input type="text" id="tx-recipient" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-6 py-4 text-lg focus:outline-none focus:ring-1 focus:ring-apple-text transition-all text-apple-text" placeholder="Enter full name">
-                      </div>
-                      <div class="grid grid-cols-2 gap-8">
-                        <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-3 block">Account Number</label>
-                            <input type="text" id="tx-account" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-6 py-4 text-lg focus:outline-none transition-all text-apple-text" placeholder="···· ···· ···· 1234">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-3 block">Amount (₹)</label>
-                            <input type="number" id="tx-amount" class="w-full bg-apple-bg border border-apple-border rounded-apple-sm px-6 py-4 text-lg font-bold text-apple-text focus:outline-none transition-all" placeholder="0.00">
-                        </div>
-                      </div>
-                      <div class="pt-8 border-t border-apple-border/50 flex items-center justify-between">
-                          <div class="text-sm text-apple-muted font-medium">Real-time risk assessment active</div>
-                          <button onclick="initiateTransfer()" class="bg-apple-text text-white px-10 py-5 rounded-apple-sm font-bold text-lg hover:opacity-90 active:scale-95 transition-all shadow-xl">Verify & Transfer</button>
-                      </div>
-                    </div>
-                </div>
-            </div>
-            
-            </div>
+      <!-- ALERTS -->
+      <div id="page-alerts" class="page">
+        <h1 class="text-5xl font-extrabold mb-8">Risk Shield Audit</h1>
+        <div id="audit-log-container" class="bg-white border border-apple-border rounded-apple divide-y divide-apple-border shadow-sm overflow-hidden">
+          <div class="p-12 text-center text-apple-muted italic">Initializing logs...</div>
         </div>
       </div>
 
-      <!-- SIMULATOR PAGE -->
-      <div id="page-simulator" class="page fade-in-up">
-        <header class="mb-16">
-          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Future Projections</h1>
-          <p class="text-xl text-apple-muted font-medium mt-2">Simulate wealth growth using historical market intelligence.</p>
-        </header>
-        <div class="grid grid-cols-12 gap-12">
-            <div class="col-span-8 bg-white rounded-apple border border-apple-border p-12">
-                <div id="sim-chart" class="h-[400px] flex items-center justify-center text-apple-muted italic">Simulation chart engine initializing...</div>
-                <div class="mt-12 grid grid-cols-3 gap-8 pt-8 border-t border-apple-border/50">
-                    <div>
-                        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2">Projected Value</div>
-                        <div id="sim-result" class="text-4xl font-extrabold text-apple-text">₹12.4L</div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2">Monthly SIP</div>
-                        <div id="sim-sip" class="text-4xl font-extrabold text-apple-text">₹5,000</div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-2">Duration</div>
-                        <div id="sim-duration" class="text-4xl font-extrabold text-apple-text">10Y</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-span-4 space-y-6">
-                <div class="bg-apple-bg rounded-apple p-8 border border-apple-border">
-                    <label class="text-[10px] font-bold uppercase tracking-widest text-apple-muted mb-4 block">Adjust Monthly SIP</label>
-                    <input type="range" min="1000" max="50000" step="1000" value="5000" class="w-full h-1.5 bg-apple-border rounded-full appearance-none cursor-pointer">
-                    <div class="flex justify-between text-xs font-bold text-apple-muted mt-4">
-                        <span>₹1k</span>
-                        <span>₹50k</span>
-                    </div>
-                </div>
-            </div>
+      <!-- PROFILE -->
+      <div id="page-profile" class="page">
+        <h1 class="text-5xl font-extrabold mb-8">Identity</h1>
+        <div class="bg-white border border-apple-border p-12 rounded-apple max-w-lg shadow-sm">
+            <button onclick="logout()" class="text-red-500 font-bold hover:underline">Sign Out of Vault</button>
         </div>
       </div>
-
-      <!-- ALERTS PAGE (RISK SHIELD) -->
-      <div id="page-alerts" class="page fade-in-up">
-        <header class="mb-16">
-          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Risk Shield Audit</h1>
-          <p class="text-xl text-apple-muted font-medium mt-2">Real-time logs of every transaction evaluated by Cortex AI.</p>
-        </header>
-        <div class="bg-white rounded-apple border border-apple-border overflow-hidden">
-            <div id="audit-log-container" class="divide-y divide-apple-border">
-                <!-- Populated by JS -->
-                <div class="p-12 text-center text-apple-muted italic">Loading audit logs...</div>
-            </div>
-        </div>
-      </div>
-
-      <!-- PROFILE PAGE -->
-      <div id="page-profile" class="page fade-in-up">
-        <header class="mb-16">
-          <h1 class="text-5xl font-extrabold tracking-tight text-apple-text">Your Identity</h1>
-          <p class="text-xl text-apple-muted font-medium mt-2">Manage your financial persona and security credentials.</p>
-        </header>
-        <div class="max-w-2xl bg-white rounded-apple border border-apple-border p-12">
-            <div class="flex items-center gap-6 mb-12">
-                <div class="w-24 h-24 bg-apple-text text-white rounded-full flex items-center justify-center text-3xl font-bold">P</div>
-                <div>
-                    <h2 class="text-3xl font-bold text-apple-text">Priya Sharma</h2>
-                    <p class="text-apple-muted">Wealth Architect Since 2024</p>
-                </div>
-            </div>
-            <div class="space-y-8">
-                <div class="flex justify-between items-center py-4 border-b border-apple-border/50">
-                    <span class="text-apple-muted font-medium">Risk Persona</span>
-                    <span class="font-bold text-apple-text uppercase tracking-widest text-sm">Aggressive Growth</span>
-                </div>
-                <div class="flex justify-between items-center py-4 border-b border-apple-border/50">
-                    <span class="text-apple-muted font-medium">Biometric Shield</span>
-                    <span class="text-apple-teal font-bold text-sm">ACTIVE</span>
-                </div>
-            </div>
-            <button onclick="logout()" class="mt-12 text-red-500 font-bold hover:underline">Sign Out</button>
-        </div>
-      </div>
-
     </main>
   </div>
-<script>
-/**
- * SECUREWEALTH TWIN v3.6 — Production Final
- * Changes: Removed OTP step, Direct Dashboard access, Safe DOM fixes
- */
 
-// 1. CONSTANTS & STATE
-const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:" || !window.location.hostname)
-  ? "http://localhost:8000"
-  : "https://securewealth-backend.onrender.com";
-let appState = "login"; // login | dashboard
+  <script>
+    /**
+     * SECUREWEALTH TWIN v4.2 — PRODUCTION FINAL
+     */
+    const API = (window.location.hostname === "localhost" || window.location.protocol === "file:") 
+      ? "http://localhost:8000" : "https://securewealth-backend.onrender.com";
 
-const USER_DEFAULTS = {
-  name: "Priya", age: 28, income: 55000, monthly_expenses: 35000,
-  goal: "buy a house in 7 years", risk_appetite: "medium",
-  current_savings: 120000, investments_value: 60000,
-  investment_experience: "beginner", avg_investment: 5000, timeline: 7,
-  assets: { savings: 120000, investments: 60000, property: 0, gold: 0, vehicles: 0 },
-  transactions: [
-    { type: "credit", label: "Monthly Income", amount: 55000 },
-    { type: "debit", label: "Rent & Utilities", amount: 15000 },
-    { type: "debit", label: "Groceries", amount: 3200 }
-  ]
-};
+    let appState = "login";
+    let USER = null;
+    let wizardStep = 1;
 
-const STATIC_FEED = [
-  { dot:'info',  agent:'ai',     msg:'Financial Profile Analyser generated wealth archetype',        time:'just now' },
-  { dot:'allow', agent:'wealth', msg:'Wealth Coach loaded personalized context for session',          time:'1 min ago' },
-  { dot:'allow', agent:'ai',     msg:'SIP Simulator projected ₹11.6L corpus over 10 years',          time:'2 min ago' },
-  { dot:'allow', agent:'ai',     msg:'Net Worth Calculator computed ₹3.1L total assets',             time:'3 min ago' },
-  { dot:'allow', agent:'ai',     msg:'Account Aggregator synced 3 bank accounts',                    time:'5 min ago' },
-];
+    // TASK 2: SAFE DOM HANDLING
+    const ui = {
+      get: (id) => document.getElementById(id),
+      show: (id, disp = 'block') => { const el = document.getElementById(id); if(el) el.style.display = disp; },
+      hide: (id) => { const el = document.getElementById(id); if(el) el.style.display = 'none'; },
+      text: (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; },
+      html: (id, htm) => { const el = document.getElementById(id); if(el) el.innerHTML = htm; },
+      val: (id) => { const el = document.getElementById(id); return el ? el.value : ''; },
+      class: (id, cls, action) => { const el = document.getElementById(id); if(el) el.classList[action](cls); }
+    };
 
-let USER = JSON.parse(localStorage.getItem('swt_user') || 'null') || { ...USER_DEFAULTS };
-let isInitialized = false;
-let wizardStep = 1;
-let selectedRisk = USER.risk_appetite || 'medium';
-
-// 2. SAFE DOM UTILITY
-const ui = {
-  get: (id) => document.getElementById(id),
-  text: (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; },
-  html: (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; },
-  val:  (id, val) => { const el = document.getElementById(id); if (el) { if(val !== undefined) el.value = val; return el.value; } return ''; },
-  show: (id, display = 'block') => { const el = document.getElementById(id); if (el) el.style.display = display; },
-  hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; },
-  class: (id, cls, action = 'add') => { const el = document.getElementById(id); if (el) el.classList[action](cls); }
-};
-
-// 3. STATE MANAGEMENT
-function setState(newState) {
-  appState = newState;
-  renderApp();
-}
-
-function renderApp() {
-  ui.hide('login-screen');
-  ui.hide('otp-modal'); 
-  ui.hide('app');
-
-  if (appState === "login") {
-    ui.show('login-screen', 'flex');
-  } else if (appState === "dashboard") {
-    ui.show('app', 'block');
-    // Ensure tailwind 'hidden' class is removed
-    ui.class('app', 'hidden', 'remove');
-  }
-}
-
-// 4. AUTH SUCCESS (DIRECT TO DASHBOARD)
-function onAuthSuccess(user) {
-  USER = user;
-  localStorage.setItem('swt_user', JSON.stringify(USER));
-  
-  setState("dashboard");
-
-  // Safe dashboard init after render
-  setTimeout(() => {
-    populateAppFromUser(USER);
-  }, 0);
-}
-
-async function safeFetch(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `${API}${endpoint}`;
-  try {
-    const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-      ...options,
+    // TASK 3: FIX PAGE INITIALIZATION ORDER
+    document.addEventListener("DOMContentLoaded", () => {
+      initApp();
     });
-    if (res.status === 401) { setState("login"); return null; }
-    return await res.json();
-  } catch (err) {
-    console.error("Fetch Error:", err);
-    return { error: true };
-  }
-}
 
-// 5. LOGIN/REGISTER FLOW (NO OTP)
-function toggleAuthMode(mode) {
-  if (mode === 'login') {
-    ui.hide('wizard-step-1');
-    ui.hide('wizard-step-2');
-    ui.hide('wizard-step-3');
-    ui.hide('step-dot-1'); ui.hide('step-dot-2'); ui.hide('step-dot-3');
-    ui.show('login-form');
-    ui.class('mode-login', 'bg-white', 'add');
-    ui.class('mode-login', 'shadow-sm', 'add');
-    ui.class('mode-login', 'text-apple-text', 'add');
-    ui.class('mode-register', 'bg-white', 'remove');
-    ui.class('mode-register', 'shadow-sm', 'remove');
-    ui.class('mode-register', 'text-apple-text', 'remove');
-    ui.class('mode-register', 'text-apple-muted', 'add');
-  } else {
-    ui.show('wizard-step-1');
-    ui.show('step-dot-1'); ui.show('step-dot-2'); ui.show('step-dot-3');
-    ui.hide('login-form');
-    ui.class('mode-register', 'bg-white', 'add');
-    ui.class('mode-register', 'shadow-sm', 'add');
-    ui.class('mode-register', 'text-apple-text', 'add');
-    ui.class('mode-login', 'bg-white', 'remove');
-    ui.class('mode-login', 'shadow-sm', 'remove');
-    ui.class('mode-login', 'text-apple-text', 'remove');
-    ui.class('mode-login', 'text-apple-muted', 'add');
-    wizardStep = 1;
-    updateWizard();
-  }
-}
-
-async function doAppLogin() {
-  const email = ui.val('l-email');
-  const password = ui.val('l-password');
-  if (!email || !password) return alert("Email and Password required");
-
-  ui.show('wizard-loading');
-  const response = await safeFetch('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password })
-  });
-
-  if (response && response.success) {
-    onAuthSuccess(response.user);
-  } else {
-    alert("Login failed: " + (response?.error || "Invalid credentials"));
-    ui.hide('wizard-loading');
-  }
-}
-
-async function submitProfile() {
-  const name = ui.val('f-name');
-  const email = ui.val('f-email');
-  const password = ui.val('f-password');
-
-  // Input Validation
-  if (!name || !email || !password) {
-    alert("All fields required: Name, Email, and Password");
-    return;
-  }
-
-  // Debug Log
-  console.log("REGISTER PAYLOAD:", { name, email, password });
-
-  ui.hide('wizard-step-3');
-  ui.show('wizard-loading');
-
-  const response = await safeFetch('/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({
-      name,
-      email,
-      password
-    })
-  });
-
-  if (response && response.success) {
-    onAuthSuccess(response.user);
-  } else {
-    alert("Registration failed: " + (response?.error || "Please try again."));
-    ui.show('wizard-step-3');
-    ui.hide('wizard-loading');
-  }
-}
-
-// Legacy login button
-function doLogin() {
-  onAuthSuccess(USER);
-}
-
-// 6. DASHBOARD POPULATION (SAFE DOM)
-async function populateAppFromUser(user) {
-  const name = (user.name || 'User').split(' ')[0];
-  ui.text('dash-greeting', `Welcome back, ${name} 👋`);
-  ui.text('sidebar-name', user.name);
-  
-  const initials = (user.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase();
-  ui.text('sidebar-avatar', initials);
-
-  loadDashboard();
-}
-
-async function loadDashboard() {
-  if (appState !== "dashboard") return;
-  
-  try {
-    const res = await safeFetch('/api/analyze', { 
-      method: "POST", 
-      body: JSON.stringify(USER) 
-    });
-    
-    if (res && !res.error) {
-      ui.text('dash-archetype', res.archetype);
-      ui.text('dash-desc', res.score_explanation || "Analyzing your patterns...");
-      ui.text('dash-behavior-score', res.behavior_score || 0);
+    function initApp() {
+      const stored = localStorage.getItem('swt_user');
+      if (stored) {
+        USER = JSON.parse(stored);
+        setState("dashboard");
+      } else {
+        setState("login");
+      }
     }
-    
-    loadNetworth();
-    loadRiskShield(); // Changed from loadRiskAlerts to match monitor UI
-    populateBankCard();
-    loadActivityFeed();
-  } catch (err) {
-    console.error("Dashboard Load Error:", err);
-  }
-}
 
-async function loadNetworth() {
-  try {
-    const res = await safeFetch('/api/ai/networth', { 
-      method: "POST", 
-      body: JSON.stringify({ 
-        user_profile: USER, 
-        savings: USER.current_savings||0, 
-        investments: USER.investments_value||0 
-      }) 
-    });
-    if (res && res.summary) {
-      ui.text("dash-networth", `₹${res.summary.net_worth.toLocaleString('en-IN')}`);
-      ui.text("dash-savings", `₹${res.summary.savings_total.toLocaleString('en-IN')}`);
-      ui.text("dash-income", `₹${USER.income.toLocaleString('en-IN')}`);
-      const rate = ((USER.income - USER.monthly_expenses) / USER.income * 100).toFixed(0);
-      ui.text("dash-savings-rate", `${rate}%`);
+    // TASK 1: FIX LOGIN FLOW
+    function setState(state) {
+      appState = state;
+      renderApp();
+      // TASK 7: FIX INITIAL DATA LOAD
+      if (state === "dashboard" && USER) {
+        initDashboard();
+      }
     }
-  } catch (e) {}
-}
 
-async function loadRiskShield() {
-  try {
-    const data = await safeFetch('/api/execute/audit');
-    if (data && data.log && data.log.length > 0) {
-      const last = data.log[data.log.length - 1];
-      ui.text("dash-risk-level", last.level || "LOW");
+    // TASK 5: FIX STATE-BASED RENDERING
+    function renderApp() {
+      ui.hide('login-screen');
+      ui.class('app', 'hidden', 'add');
+      
+      if (appState === "login") {
+        ui.show('login-screen', 'flex');
+      } else if (appState === "dashboard") {
+        ui.class('app', 'hidden', 'remove');
+        ui.show('app', 'block');
+      }
     }
-  } catch (e) {}
-}
 
-// 7. UI HELPERS
-function switchPage(name, navEl) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  ui.class('page-' + name, 'active', 'add');
-  if (navEl) navEl.classList.add('active');
-  
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'networth') loadNetworth();
-  if (name === 'alerts') loadRiskAlerts();
-}
+    function toggleAuthMode(mode) {
+      if (mode === 'login') {
+        ui.hide('wizard-step-1'); ui.hide('wizard-step-2'); ui.hide('wizard-step-3');
+        ui.show('login-form');
+        ui.class('mode-login', 'bg-white', 'add'); ui.class('mode-register', 'bg-white', 'remove');
+      } else {
+        ui.show('wizard-step-1'); ui.hide('login-form');
+        ui.class('mode-register', 'bg-white', 'add'); ui.class('mode-login', 'bg-white', 'remove');
+        wizardStep = 1; updateWizard();
+      }
+    }
 
-function logout() {
-  localStorage.removeItem('swt_user');
-  location.reload();
-}
+    // TASK 6: FIX API SAFETY
+    async function safeFetch(endpoint, options = {}) {
+      const url = endpoint.startsWith('http') ? endpoint : `${API}${endpoint}`;
+      try {
+        const res = await fetch(url, {
+          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+          ...options
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.error("API ERROR:", e);
+        return { error: true, details: e.message };
+      }
+    }
 
-function nextWizardStep() { wizardStep++; updateWizard(); }
-function prevWizardStep() { wizardStep--; updateWizard(); }
-function updateWizard() {
-  [1,2,3].forEach(s => ui.hide('wizard-step-' + s));
-  ui.show('wizard-step-' + wizardStep);
-}
-function selectRisk(level) {
-  selectedRisk = level;
-  ['low', 'medium', 'high'].forEach(l => ui.class('risk-' + l, 'active', l === level ? 'add' : 'remove'));
-}
-function fillDemo() { ui.val('f-name', 'Priya Sharma'); selectRisk('medium'); wizardStep = 3; updateWizard(); }
+    async function doAppLogin() {
+      const email = ui.val('l-email'), password = ui.val('l-password');
+      if(!email || !password) return alert("Credentials required");
+      
+      ui.show('global-loading');
+      const res = await safeFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+      ui.hide('global-loading');
 
-// 8. INIT
-function initApp() {
-  if (isInitialized) return;
-  console.log("App Starting...");
-  
-  const saved = localStorage.getItem('swt_user');
-  if (saved) {
-    USER = JSON.parse(saved);
-    onAuthSuccess(USER);
-  } else {
-    setState("login");
-  }
-  
-  isInitialized = true;
-}
+      if(res && res.success) onAuthSuccess(res.user);
+      else alert("Login Failed: " + (res.error || "Check credentials"));
+    }
 
-window.addEventListener('DOMContentLoaded', initApp);
+    function onAuthSuccess(user) {
+      USER = user;
+      localStorage.setItem('swt_user', JSON.stringify(USER));
+      setState("dashboard");
+    }
 
-// Logic stubs for chart/feed (Maintained structure)
-function updateChart() {}
-function populateBankCard() {}
-function loadActivityFeed() {}
-function verifyOTP() {} // OTP removed from flow, stub for safety
-</script>\n<div id="why-tooltip" style="
-  position: fixed;
-  background: #1e293b;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  max-width: 260px;
-  display: none;
-  z-index: 9999;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-"></div>
+    function initDashboard() {
+      ui.text('sidebar-name-display', USER.name || 'User');
+      ui.text('dash-greeting', `Good morning, ${USER.name ? USER.name.split(' ')[0] : 'User'}.`);
+      loadDashboardData();
+    }
 
-<div id="otp-modal" class="otp-modal">
-  <div class="otp-box">
-    <div style="font-size:40px; margin-bottom:16px;">🔐</div>
-    <h3>Secure Verification</h3>
-    <p>A one-time passcode has been sent to your registered mobile number for this high-value action.</p>
-    <input type="text" id="otp-input" class="otp-input-field" placeholder="••••••" maxlength="6" />
-    <button class="otp-btn" onclick="verifyOTP()">Verify & Confirm</button>
-    <div style="margin-top:16px; font-size:11px; color:var(--text-muted);">
-      Didn't receive it? <span style="color:var(--teal); cursor:pointer;">Resend OTP</span>
-    </div>
-  </div>
-</div>
+    async function loadDashboardData() {
+      try {
+        const analyze = await safeFetch('/api/analyze', { method: "POST", body: JSON.stringify(USER) });
+        if(analyze && !analyze.error) {
+          ui.text('dash-archetype', analyze.archetype);
+          ui.text('dash-behavior-explanation', analyze.score_explanation || "Optimal patterns detected.");
+          ui.text('dash-behavior-score', analyze.behavior_score);
+        }
+        
+        const nw = await safeFetch('/api/ai/networth', { 
+            method: "POST", 
+            body: JSON.stringify({ user_profile: USER, savings: USER.current_savings||0, investments: USER.investments_value||0 }) 
+        });
+        if(nw && nw.summary) {
+          ui.text('nw-total-assets', `₹${nw.summary.net_worth.toLocaleString('en-IN')}`);
+          ui.text('dash-savings', `₹${nw.summary.savings_total.toLocaleString('en-IN')}`);
+        }
+        loadAuditLogs();
+        simulateWealth();
+      } catch(e) {}
+    }
+
+    async function loadAuditLogs() {
+        const data = await safeFetch('/api/execute/audit');
+        if(data && data.log) {
+            const html = data.log.slice(-10).reverse().map(l => `
+                <div class="p-6 flex justify-between items-center hover:bg-apple-bg transition-colors">
+                    <div><div class="font-bold text-sm text-apple-text">${l.action_type}</div><div class="text-[10px] text-apple-muted">${new Date(l.timestamp).toLocaleTimeString()}</div></div>
+                    <div class="text-xs font-bold ${l.decision === 'ALLOW' ? 'text-apple-teal' : 'text-red-500'}">${l.decision}</div>
+                </div>
+            `).join('');
+            ui.html('audit-log-container', html || '<div class="p-12 text-center text-apple-muted">No security events found.</div>');
+        }
+    }
+
+    function simulateWealth() {
+        const monthly = USER.income - USER.monthly_expenses || 5000;
+        const total = (USER.current_savings || 0) + (monthly * 12 * 10 * 1.08); // Simple 8% growth sim
+        ui.text('sim-amount', `₹${(total/100000).toFixed(1)}L`);
+    }
+
+    function switchPage(name, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      ui.class('page-' + name, 'active', 'add');
+      if(el) el.classList.add('active');
+    }
+
+    function nextWizardStep() { wizardStep++; updateWizard(); }
+    function prevWizardStep() { wizardStep--; updateWizard(); }
+    function updateWizard() {
+      ui.hide('wizard-step-1'); ui.hide('wizard-step-2'); ui.hide('wizard-step-3');
+      ui.show('wizard-step-' + wizardStep);
+    }
+
+    async function submitProfile() {
+      const payload = {
+        name: ui.val('f-name'), email: ui.val('f-email'), password: ui.val('f-password'),
+        income: parseFloat(ui.val('f-income') || 0), expenses: parseFloat(ui.val('f-expenses') || 0),
+        savings: parseFloat(ui.val('f-savings') || 0), investments: parseFloat(ui.val('f-investments') || 0),
+        goal: ui.val('f-goal') || "Growth"
+      };
+      
+      ui.show('global-loading');
+      const res = await safeFetch('/api/auth/register', { method: 'POST', body: JSON.stringify(payload) });
+      ui.hide('global-loading');
+      
+      if(res && res.success) onAuthSuccess(res.user);
+      else alert("Registration failed: " + (res.error || "Check your details"));
+    }
+
+    function logout() { localStorage.clear(); location.reload(); }
+  </script>
 </body>
 </html>
