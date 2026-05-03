@@ -569,13 +569,15 @@ function setState(newState) {
 
 function renderApp() {
   ui.hide('login-screen');
-  ui.hide('otp-modal'); // Keep hidden as OTP is removed from flow
-  ui.class('app', 'visible', 'remove');
+  ui.hide('otp-modal'); 
+  ui.hide('app');
 
   if (appState === "login") {
     ui.show('login-screen', 'flex');
   } else if (appState === "dashboard") {
-    ui.class('app', 'visible', 'add');
+    ui.show('app', 'block');
+    // Ensure tailwind 'hidden' class is removed
+    ui.class('app', 'hidden', 'remove');
   }
 }
 
@@ -671,13 +673,12 @@ async function loadDashboard() {
     
     if (res && !res.error) {
       ui.text('dash-archetype', res.archetype);
-      ui.text('dash-behavior-explanation', res.score_explanation || "Analyzing your patterns...");
-      ui.text('dash-behavior-score', `${res.behavior_score || 0}%`);
+      ui.text('dash-desc', res.score_explanation || "Analyzing your patterns...");
+      ui.text('dash-behavior-score', res.behavior_score || 0);
     }
     
     loadNetworth();
-    loadRiskAlerts();
-    updateChart();
+    loadRiskShield(); // Changed from loadRiskAlerts to match monitor UI
     populateBankCard();
     loadActivityFeed();
   } catch (err) {
@@ -696,27 +697,21 @@ async function loadNetworth() {
       }) 
     });
     if (res && res.summary) {
-      ui.text("nw-total-assets", `₹${res.summary.total_assets.toLocaleString('en-IN')}`);
-      ui.text("nw-total-liabilities", `₹${res.summary.total_liabilities.toLocaleString('en-IN')}`);
-      ui.text("nw-net-worth", `₹${res.summary.net_worth.toLocaleString('en-IN')}`);
+      ui.text("dash-networth", `₹${res.summary.net_worth.toLocaleString('en-IN')}`);
+      ui.text("dash-savings", `₹${res.summary.savings_total.toLocaleString('en-IN')}`);
+      ui.text("dash-income", `₹${USER.income.toLocaleString('en-IN')}`);
+      const rate = ((USER.income - USER.monthly_expenses) / USER.income * 100).toFixed(0);
+      ui.text("dash-savings-rate", `${rate}%`);
     }
   } catch (e) {}
 }
 
-async function loadRiskAlerts() {
+async function loadRiskShield() {
   try {
     const data = await safeFetch('/api/execute/audit');
-    if (data && data.log) {
-      ui.text("alert-total", data.log.length);
-      const html = data.log.slice(-5).reverse().map(l => `
-        <div class="alert-item alert-${l.decision.toLowerCase()}">
-          <div class="alert-icon">${l.decision==='BLOCK'?'🔴':'🟢'}</div>
-          <div class="alert-body">
-            <div class="alert-title">${l.action_type} — ${l.decision}</div>
-            <div class="alert-meta">${new Date(l.timestamp).toLocaleTimeString()}</div>
-          </div>
-        </div>`).join('');
-      ui.html("audit-log-container", html);
+    if (data && data.log && data.log.length > 0) {
+      const last = data.log[data.log.length - 1];
+      ui.text("dash-risk-level", last.level || "LOW");
     }
   } catch (e) {}
 }
