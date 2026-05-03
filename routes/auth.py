@@ -69,40 +69,65 @@ class TransferRequest(BaseModel):
 
 @router.post("/register")
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    """
+    Production-hardened registration endpoint.
+    - Validates presence of required fields.
+    - Handles database and connection failures gracefully.
+    - Logs detailed errors for debugging while returning safe messages.
+    """
     print(f"[AUTH] Register attempt: {req.email}")
 
+    # 1. Basic Validation
+    if not req.email or "@" not in req.email:
+        raise HTTPException(400, "Invalid email address")
+    if not req.name or len(req.name) < 2:
+        raise HTTPException(400, "Name must be at least 2 characters")
+    if not req.password or len(req.password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+
     if db is None:
-        print("[AUTH] ❌ No DB session")
-        raise HTTPException(503, "Database unavailable")
+        print("[AUTH] ❌ DB session is None — DB connection might be failing")
+        raise HTTPException(503, "Service temporarily unavailable: Database connection failed")
 
     try:
-        # Check duplicate email
-        existing = db.query(User).filter(User.email == req.email).first()
+        # 2. Check for existing user
+        try:
+            existing = db.query(User).filter(User.email == req.email).first()
+        except Exception as db_err:
+            print(f"[AUTH] ❌ DB Query Error: {db_err}")
+            raise HTTPException(500, "Internal database error during email check")
+
         if existing:
-            print(f"[AUTH] ❌ Email already exists: {req.email}")
+            print(f"[AUTH] ❌ Conflict: Email already exists: {req.email}")
             raise HTTPException(400, "Email already registered")
 
-        # Create user
-        user = User(
-            id=str(uuid.uuid4()),
-            name=req.name,
-            email=req.email,
-            password_hash=hash_password(req.password),
-        )
-        db.add(user)
-        db.flush()  # Get user.id without full commit yet
-        print(f"[AUTH] User flushed with id: {user.id}")
+        # 3. Create User record
+        try:
+            user = User(
+                id=str(uuid.uuid4()),
+                name=req.name,
+                email=req.email,
+                password_hash=hash_password(req.password),
+            )
+            db.add(user)
+            db.flush()  # Assigns user.id
+            print(f"[AUTH] User created: {user.id}")
 
-        # Create account with starting balance
-        account = Account(
-            id=str(uuid.uuid4()),
-            user_id=user.id,
-            account_number=generate_account_number(),
-            balance=Decimal("100000.00"),
-        )
-        db.add(account)
-        db.commit()
-        print(f"[AUTH] ✅ Committed — user: {user.email} | account: {account.account_number}")
+            # 4. Create associated Account
+            account = Account(
+                id=str(uuid.uuid4()),
+                user_id=user.id,
+                account_number=generate_account_number(),
+                balance=Decimal("100000.00"),
+            )
+            db.add(account)
+            db.commit()
+            print(f"[AUTH] ✅ Transaction committed: {user.email}")
+        except Exception as commit_err:
+            db.rollback()
+            import traceback
+            print(f"[AUTH] ❌ Transaction Failed:\n{traceback.format_exc()}")
+            raise HTTPException(500, f"Failed to persist user data: {str(commit_err)}")
 
         db.refresh(user)
         db.refresh(account)
@@ -121,9 +146,9 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        if db: db.rollback()
-        print(f"[AUTH] ❌ Register failed: {e}")
-        raise HTTPException(500, f"Registration error: {str(e)}")
+        import traceback
+        print(f"[AUTH] ❌ UNEXPECTED REGISTER ERROR:\n{traceback.format_exc()}")
+        raise HTTPException(500, "An unexpected error occurred during registration")
 
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
